@@ -60,7 +60,9 @@ export function hashToken(token: string): string {
 export const ACCESS_COOKIE_NAME = 'decom_access_token';
 export const REFRESH_COOKIE_NAME = 'decom_refresh_token';
 
-const isProd = env.NODE_ENV === 'production';
+// Use Secure cookies in HTTPS production; allow local HTTP Docker testing via COOKIE_SECURE=false
+const useSecureCookie =
+  env.COOKIE_SECURE !== undefined ? env.COOKIE_SECURE : env.NODE_ENV === 'production';
 
 export function setAuthCookies(
   res: Response,
@@ -69,7 +71,7 @@ export function setAuthCookies(
 ): void {
   res.cookie(ACCESS_COOKIE_NAME, accessToken, {
     httpOnly: true, // Browser JS (document.cookie) CANNOT read this
-    secure: isProd, // HTTPS only in production
+    secure: useSecureCookie, // HTTPS only in real production
     sameSite: 'lax', // Protects against CSRF
     path: '/',
     maxAge: 15 * 60 * 1000, // 15 minutes
@@ -77,7 +79,7 @@ export function setAuthCookies(
 
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
-    secure: isProd,
+    secure: useSecureCookie,
     sameSite: 'lax',
     path: '/api/auth', // Sent ONLY to /api/auth endpoints
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days

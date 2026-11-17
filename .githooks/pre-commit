@@ -1,0 +1,31 @@
+#!/bin/sh
+# ============================================================
+# Automated Git Pre-Commit Quality Gate
+# Runs automatically before EVERY `git commit`!
+# Blocks commits if TypeScript or ESLint finds any errors,
+# OR if someone accidentally stages a secret .env file.
+# ============================================================
+
+set -e
+
+echo "🔍 Running pre-commit security & quality checks..."
+
+# 1. Secret Leak Guard: block committing any real .env file
+if git diff --cached --name-only | grep -E '(^|/)\.env(\.local)?$' >/dev/null 2>&1; then
+  echo "❌ BLOCKED: Never commit .env secret files to Git!"
+  exit 1
+fi
+
+# 2. Check Backend TypeScript if backend files are staged
+if git diff --cached --name-only | grep -q '^backend/'; then
+  echo "⚙️  Typechecking backend..."
+  (cd backend && npm run typecheck)
+fi
+
+# 3. Check Frontend TypeScript & ESLint if frontend files are staged
+if git diff --cached --name-only | grep -q '^frontend/'; then
+  echo "🎨 Typechecking & linting frontend..."
+  (cd frontend && npm run typecheck && npm run lint)
+fi
+
+echo "✅ All pre-commit checks passed!"
