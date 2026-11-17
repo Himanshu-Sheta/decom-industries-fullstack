@@ -438,6 +438,12 @@ export default function AdminDashboardPage() {
                   products={products}
                   globalSearch={globalSearch}
                   onChanged={handleDataChanged}
+                  onProductPatched={(updated, msg) => {
+                    setProducts((prev) =>
+                      prev.map((item) => (item.id === updated.id ? updated : item))
+                    );
+                    pushToast('ok', msg);
+                  }}
                   onError={(m) => pushToast('err', m)}
                   triggerAddCount={triggerAddCount}
                 />

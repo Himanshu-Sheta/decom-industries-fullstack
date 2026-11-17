@@ -29,6 +29,7 @@ interface ProductsTabProps {
   products: Product[];
   globalSearch: string;
   onChanged: (toast: string) => void;
+  onProductPatched: (updated: Product, toast: string) => void;
   onError: (msg: string) => void;
   triggerAddCount: number;
 }
@@ -52,16 +53,20 @@ const EMPTY_FORM = {
   isActive: true,
 };
 
+const STOCK_STEPS = [1, 10, 20, 30, 50, 100] as const;
+
 export function ProductsTab({
   products,
   globalSearch,
   onChanged,
+  onProductPatched,
   onError,
   triggerAddCount,
 }: ProductsTabProps) {
   const [localSearch, setLocalSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'ARCHIVED'>('ALL');
+  const [stockStep, setStockStep] = useState<number>(10);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -281,8 +286,8 @@ export function ProductsTab({
     });
     if (cleanStock === p.stock) return;
     try {
-      await productsApi.update(p.id, { stock: cleanStock });
-      onChanged(`${p.sku} stock updated → ${cleanStock}`);
+      const res = await productsApi.update(p.id, { stock: cleanStock });
+      onProductPatched(res.product, `${p.sku} stock updated → ${cleanStock}`);
     } catch (err) {
       onError(err instanceof ApiError ? err.message : 'Stock update failed.');
     }
@@ -380,6 +385,23 @@ export function ProductsTab({
               </button>
             ))}
           </div>
+
+          {/* Clean Stock Step Option Selector (1, 10, 20, 30, 50, 100) */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px]">
+            <span className="font-bold text-amber-900">Stock Step:</span>
+            <select
+              aria-label="Stock increment step"
+              value={stockStep}
+              onChange={(e) => setStockStep(Number(e.target.value))}
+              className="bg-white border border-amber-200 rounded-lg px-2 py-1 font-mono font-extrabold text-slate-950 focus:outline-none focus:border-amber-500 cursor-pointer"
+            >
+              {STOCK_STEPS.map((step) => (
+                <option key={step} value={step}>
+                  ±{step}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -406,7 +428,7 @@ export function ProductsTab({
               <th className="px-5 py-3.5">Product</th>
               <th className="px-4 py-3.5">SKU / Spec</th>
               <th className="px-4 py-3.5">Price</th>
-              <th className="px-4 py-3.5">Stock</th>
+              <th className="px-4 py-3.5">Stock (±{stockStep})</th>
               <th className="px-4 py-3.5">Visibility</th>
               <th className="px-5 py-3.5 text-right">Actions</th>
             </tr>
@@ -458,8 +480,9 @@ export function ProductsTab({
                   <div className="inline-flex items-center rounded-xl bg-slate-50 border border-slate-200 p-0.5 shadow-sm">
                     <button
                       type="button"
-                      aria-label="Decrease stock by 1"
-                      onClick={() => handleStockDelta(p, -1)}
+                      aria-label={`Decrease stock by ${stockStep}`}
+                      title={`Subtract ${stockStep}`}
+                      onClick={() => handleStockDelta(p, -stockStep)}
                       disabled={p.stock <= 0}
                       className="w-7 h-7 rounded-lg hover:bg-white disabled:opacity-40 text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
                     >
@@ -497,8 +520,9 @@ export function ProductsTab({
                     />
                     <button
                       type="button"
-                      aria-label="Increase stock by 1"
-                      onClick={() => handleStockDelta(p, 1)}
+                      aria-label={`Increase stock by ${stockStep}`}
+                      title={`Add ${stockStep}`}
+                      onClick={() => handleStockDelta(p, stockStep)}
                       className="w-7 h-7 rounded-lg hover:bg-white text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />

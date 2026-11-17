@@ -49,10 +49,11 @@ app.use(
   })
 );
 
-// 3. Rate Limiting: stops brute-force & spam flooding (max 150 requests / 15 mins per IP)
+// 3. Rate Limiting: protects against DDoS/spam while keeping Admin & browsing smooth
+// (Strict 15 req/15m brute-force limit stays on /api/auth/login & /register!)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 150,
+  max: env.NODE_ENV === 'development' ? 5000 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
