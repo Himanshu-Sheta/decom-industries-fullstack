@@ -1,6 +1,7 @@
 import type {
   AdminStats,
   AdminUserRow,
+  HealthResponse,
   OemQuote,
   Order,
   OrderStatus,
@@ -252,22 +253,64 @@ export const oemApi = {
         body: JSON.stringify({ status }),
       }
     ),
+
+  remove: (id: string) =>
+    apiRequest<{ success: boolean; message: string }>(`/oem-quotes/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // ============================================================
-// 5. Admin Dashboard API (/api/admin/*)
+// 5. Admin Dashboard & Health API (/api/admin/*, /api/health)
 // ============================================================
 export const adminApi = {
+  health: () => apiRequest<HealthResponse>('/health'),
+
   stats: () =>
     apiRequest<{
       success: boolean;
       stats: AdminStats;
-      recentOrders: (Order & { _count: { items: number } })[];
+      recentOrders: Order[];
     }>('/admin/stats'),
 
   users: () =>
     apiRequest<{ success: boolean; count: number; users: AdminUserRow[] }>(
       '/admin/users'
+    ),
+
+  createUser: (payload: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    businessName?: string;
+    city?: string;
+    role: Role;
+  }) =>
+    apiRequest<{ success: boolean; message: string; user: AdminUserRow }>(
+      '/admin/users',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  updateUser: (
+    id: string,
+    payload: {
+      name?: string;
+      phone?: string;
+      businessName?: string | null;
+      city?: string | null;
+      role?: Role;
+    }
+  ) =>
+    apiRequest<{ success: boolean; message: string; user: User }>(
+      `/admin/users/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
     ),
 
   updateUserRole: (id: string, role: Role) =>
@@ -278,4 +321,9 @@ export const adminApi = {
         body: JSON.stringify({ role }),
       }
     ),
+
+  deleteUser: (id: string) =>
+    apiRequest<{ success: boolean; message: string }>(`/admin/users/${id}`, {
+      method: 'DELETE',
+    }),
 };

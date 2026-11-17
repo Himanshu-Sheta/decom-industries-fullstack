@@ -141,3 +141,32 @@ oemRouter.patch(
     }
   }
 );
+
+// ============================================================
+// DELETE /api/oem-quotes/:id — Delete OEM inquiry (ADMIN ONLY)
+// ============================================================
+oemRouter.delete(
+  '/:id',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req, res, next) => {
+    try {
+      const id = String(req.params.id);
+      const existing = await prisma.oemQuote.findUnique({
+        where: { id },
+        select: { id: true, quoteNumber: true },
+      });
+      if (!existing) {
+        throw new AppError('OEM quote not found.', 404);
+      }
+
+      await prisma.oemQuote.delete({ where: { id } });
+      res.json({
+        success: true,
+        message: `Deleted OEM quote ${existing.quoteNumber}.`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);

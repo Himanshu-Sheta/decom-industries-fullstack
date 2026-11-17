@@ -102,12 +102,39 @@ export interface OemQuote {
   createdAt: string;
 }
 
+export interface LowStockItem {
+  id: string;
+  name: string;
+  sku: string;
+  stock: number;
+  imageUrl: string;
+  priceINR: number;
+}
+
+export interface CategoryRevenue {
+  category: string;
+  revenueINR: number;
+  units: number;
+}
+
 export interface AdminStats {
   totalRevenueINR: number;
+  totalGstINR: number;
   totalOrders: number;
   pendingOrders: number;
   totalProducts: number;
   lowStockProducts: number;
   totalUsers: number;
   newOemQuotes: number;
+  ordersByStatus: Record<OrderStatus, number>;
+  revenueByCategory: CategoryRevenue[];
+  lowStockList: LowStockItem[];
+}
+
+export interface HealthResponse {
+  success: boolean;
+  service: string;
+  environment: string;
+  database: string;
+  timestamp: string;
 }
