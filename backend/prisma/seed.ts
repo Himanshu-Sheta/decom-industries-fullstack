@@ -23,6 +23,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 199,
     stock: 420,
     imageUrl: '/images/product-saree-organizer.jpg',
+    galleryUrls: [
+      '/images/product-saree-organizer.jpg',
+      '/images/saree-angle-front.jpg',
+      '/images/saree-angle-inside.jpg',
+      '/images/saree-angle-detail.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -40,6 +46,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 420,
     stock: 260,
     imageUrl: '/images/product-closet-storage.jpg',
+    galleryUrls: [
+      '/images/product-closet-storage.jpg',
+      '/images/closet-angle-front.jpg',
+      '/images/closet-angle-inside.jpg',
+      '/images/closet-angle-detail.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -57,6 +69,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 590,
     stock: 180,
     imageUrl: '/images/product-jewelry-kit.jpg',
+    galleryUrls: [
+      '/images/product-jewelry-kit.jpg',
+      '/images/jewelry-angle-front.jpg',
+      '/images/jewelry-angle-pockets.jpg',
+      '/images/jewelry-angle-detail.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -73,7 +91,13 @@ const SEED_PRODUCTS = [
     priceINR: 499,
     samplePriceINR: 549,
     stock: 520,
-    imageUrl: '/images/product-saree-organizer.jpg',
+    imageUrl: '/images/decom-transparent-storage-bag-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-transparent-storage-bag-angle-1.jpg',
+      '/images/decom-transparent-storage-bag-angle-2.jpg',
+      '/images/decom-transparent-storage-bag-angle-3.jpg',
+      '/images/decom-transparent-storage-bag-angle-4.jpg',
+    ],
     isFeatured: false,
   },
   {
@@ -91,6 +115,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 350,
     stock: 195,
     imageUrl: '/images/decom-handbag-purse-organizer-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-handbag-purse-organizer-angle-1.jpg',
+      '/images/decom-handbag-purse-organizer-angle-2.jpg',
+      '/images/decom-handbag-purse-organizer-angle-3.jpg',
+      '/images/decom-handbag-purse-organizer-angle-4.jpg',
+    ],
     isFeatured: false,
   },
   {
@@ -108,6 +138,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 450,
     stock: 310,
     imageUrl: '/images/decom-blanket-bedsheet-storage-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-blanket-bedsheet-storage-angle-1.jpg',
+      '/images/decom-blanket-bedsheet-storage-angle-2.jpg',
+      '/images/decom-blanket-bedsheet-storage-angle-3.jpg',
+      '/images/decom-blanket-bedsheet-storage-angle-4.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -125,6 +161,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 240,
     stock: 340,
     imageUrl: '/images/decom-transparent-vanity-pouch-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-transparent-vanity-pouch-angle-1.jpg',
+      '/images/decom-transparent-vanity-pouch-angle-2.jpg',
+      '/images/decom-transparent-vanity-pouch-angle-3.jpg',
+      '/images/decom-transparent-vanity-pouch-angle-4.jpg',
+    ],
     isFeatured: false,
   },
   {
@@ -142,6 +184,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 2499,
     stock: 65,
     imageUrl: '/images/decom-combo-storage-set-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-combo-storage-set-angle-1.jpg',
+      '/images/decom-combo-storage-set-angle-2.jpg',
+      '/images/decom-combo-storage-set-angle-3.jpg',
+      '/images/decom-combo-storage-set-angle-4.jpg',
+    ],
     isFeatured: true,
   },
 ];
@@ -202,11 +250,14 @@ async function main() {
     },
   });
 
-  // 3. Seed 8 Decom Industries Products
+  // 3. Seed 8 Decom Industries Products (with multi-angle galleries)
   for (const product of SEED_PRODUCTS) {
     await prisma.product.upsert({
       where: { slug: product.slug },
-      update: { imageUrl: product.imageUrl },
+      update: {
+        imageUrl: product.imageUrl,
+        galleryUrls: product.galleryUrls,
+      },
       create: product,
     });
   }

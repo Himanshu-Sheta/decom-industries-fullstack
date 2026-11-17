@@ -14,10 +14,22 @@ import {
   Plus,
   Minus,
   Zap,
+  ChevronLeft,
+  ChevronRight,
+  Images,
 } from 'lucide-react';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
 import { useCart } from '@/context/CartContext';
+
+function getProductPhotos(p: Product): string[] {
+  const unique = new Set<string>();
+  if (p.imageUrl) unique.add(p.imageUrl);
+  for (const url of p.galleryUrls || []) {
+    if (url) unique.add(url);
+  }
+  return Array.from(unique);
+}
 
 export function ProductCatalog() {
   const { addToCart, openCart } = useCart();
@@ -31,6 +43,8 @@ export function ProductCatalog() {
   const [addedId, setAddedId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalQty, setModalQty] = useState(1);
+  const [modalPhotoIdx, setModalPhotoIdx] = useState(0);
+  const [cardPhotoIdx, setCardPhotoIdx] = useState<Record<string, number>>({});
   const [cardQuantities, setCardQuantities] = useState<Record<string, number>>({});
   const [refreshTick, setRefreshTick] = useState(0);
 
@@ -92,6 +106,21 @@ export function ProductCatalog() {
   const openQuickView = (product: Product) => {
     setSelectedProduct(product);
     setModalQty(getCardQty(product));
+    setModalPhotoIdx(cardPhotoIdx[product.id] ?? 0);
+  };
+
+  const stepCardPhoto = (
+    e: React.MouseEvent,
+    productId: string,
+    total: number,
+    delta: number
+  ) => {
+    e.stopPropagation();
+    setCardPhotoIdx((prev) => {
+      const current = prev[productId] ?? 0;
+      const next = (current + delta + total) % total;
+      return { ...prev, [productId]: next };
+    });
   };
 
   const quickPresets = selectedProduct
@@ -192,6 +221,9 @@ export function ProductCatalog() {
           {products.map((product, index) => {
             const qty = getCardQty(product);
             const outOfStock = product.stock === 0;
+            const photos = getProductPhotos(product);
+            const activePhotoIdx = (cardPhotoIdx[product.id] ?? 0) % Math.max(1, photos.length);
+            const currentPhoto = photos[activePhotoIdx] || product.imageUrl;
             return (
               <motion.article
                 key={product.id}
@@ -204,27 +236,78 @@ export function ProductCatalog() {
                 }}
                 className="group rounded-3xl bg-white border border-slate-200/80 shadow-card hover:shadow-soft hover:-translate-y-1.5 overflow-hidden flex flex-col transition-[transform,box-shadow] duration-300 ease-out will-change-transform"
               >
-                  {/* Product Image */}
-                  <div
-                    onClick={() => openQuickView(product)}
-                    className="relative aspect-[4/3] overflow-hidden bg-slate-100 cursor-pointer"
-                  >
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 flex gap-1.5">
-                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur text-[10px] font-bold uppercase tracking-wide text-amber-700 shadow-sm">
-                        {product.category}
-                      </span>
-                    </div>
-                    {product.stock <= 25 && (
-                      <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-rose-600 text-white text-[10px] font-bold">
-                        {outOfStock ? 'Out of stock' : `Only ${product.stock} left`}
-                      </span>
-                    )}
+                {/* Interactive Multi-Photo Product Image */}
+                <div
+                  onClick={() => openQuickView(product)}
+                  className="relative aspect-[4/3] overflow-hidden bg-slate-100 cursor-pointer"
+                >
+                  <img
+                    src={currentPhoto}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 flex gap-1.5">
+                    <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur text-[10px] font-bold uppercase tracking-wide text-amber-700 shadow-sm">
+                      {product.category}
+                    </span>
                   </div>
+
+                  {photos.length > 1 && (
+                    <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/75 backdrop-blur text-white text-[10px] font-bold">
+                      <Images className="w-3 h-3" />
+                      {activePhotoIdx + 1}/{photos.length}
+                    </span>
+                  )}
+
+                  {product.stock <= 25 && (
+                    <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                      {outOfStock ? 'Out of stock' : `Only ${product.stock} left`}
+                    </span>
+                  )}
+
+                  {/* Card Prev / Next Photo Chevrons + Dots */}
+                  {photos.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Previous photo"
+                        onClick={(e) => stepCardPhoto(e, product.id, photos.length, -1)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next photo"
+                        onClick={(e) => stepCardPhoto(e, product.id, photos.length, 1)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                        {photos.map((_, dotIdx) => (
+                          <button
+                            key={dotIdx}
+                            type="button"
+                            aria-label={`Photo ${dotIdx + 1}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCardPhotoIdx((prev) => ({
+                                ...prev,
+                                [product.id]: dotIdx,
+                              }));
+                            }}
+                            className={`h-1.5 rounded-full transition-all ${
+                              dotIdx === activePhotoIdx
+                                ? 'w-4 bg-amber-400'
+                                : 'w-1.5 bg-white/75 hover:bg-white'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
 
                   {/* Card Body */}
                   <div className="p-5 flex-1 flex flex-col">
@@ -398,12 +481,84 @@ export function ProductCatalog() {
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="bg-slate-100 aspect-square md:aspect-auto">
-                <img
-                  src={selectedProduct.imageUrl}
-                  alt={selectedProduct.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="bg-slate-50 p-4 flex flex-col justify-between gap-3">
+                {(() => {
+                  const modalPhotos = getProductPhotos(selectedProduct);
+                  const safeIdx = modalPhotoIdx % Math.max(1, modalPhotos.length);
+                  const activeUrl = modalPhotos[safeIdx] || selectedProduct.imageUrl;
+                  return (
+                    <>
+                      <div className="relative rounded-2xl overflow-hidden bg-slate-100 aspect-[4/3] border border-slate-200/80">
+                        <AnimatePresence mode="wait">
+                          <motion.img
+                            key={activeUrl}
+                            src={activeUrl}
+                            alt={`${selectedProduct.name} — view ${safeIdx + 1}`}
+                            initial={{ opacity: 0.25 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0.25 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full h-full object-cover"
+                          />
+                        </AnimatePresence>
+
+                        {modalPhotos.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              aria-label="Previous photo"
+                              onClick={() =>
+                                setModalPhotoIdx(
+                                  (safeIdx - 1 + modalPhotos.length) %
+                                    modalPhotos.length
+                                )
+                              }
+                              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-900 shadow flex items-center justify-center"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Next photo"
+                              onClick={() =>
+                                setModalPhotoIdx((safeIdx + 1) % modalPhotos.length)
+                              }
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-900 shadow flex items-center justify-center"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                            <span className="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-slate-950/75 text-white text-[10px] font-bold">
+                              {safeIdx + 1} / {modalPhotos.length}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {modalPhotos.length > 1 && (
+                        <div className="grid grid-cols-4 gap-2">
+                          {modalPhotos.map((url, idx) => (
+                            <button
+                              key={url}
+                              type="button"
+                              onClick={() => setModalPhotoIdx(idx)}
+                              className={`rounded-xl overflow-hidden aspect-[4/3] border-2 transition-all ${
+                                idx === safeIdx
+                                  ? 'border-amber-500 ring-2 ring-amber-500/25'
+                                  : 'border-slate-200 opacity-70 hover:opacity-100'
+                              }`}
+                            >
+                              <img
+                                src={url}
+                                alt={`Thumbnail ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="p-6 flex flex-col">

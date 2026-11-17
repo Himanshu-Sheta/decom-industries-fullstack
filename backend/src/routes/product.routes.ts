@@ -24,11 +24,24 @@ const createProductSchema = z.object({
   samplePriceINR: z.coerce.number().int().min(1),
   stock: z.coerce.number().int().min(0).default(100),
   imageUrl: z.string().trim().min(1).max(500),
+  galleryUrls: z
+    .array(z.string().trim().min(1).max(500))
+    .max(12, 'Maximum 12 photos per product')
+    .optional()
+    .default([]),
   isFeatured: z.boolean().optional().default(false),
   isActive: z.boolean().optional().default(true),
 });
 
 const updateProductSchema = createProductSchema.partial();
+
+function normalizeGallery(imageUrl: string, galleryUrls?: string[]): string[] {
+  const unique = new Set<string>([imageUrl]);
+  for (const url of galleryUrls ?? []) {
+    if (url.trim()) unique.add(url.trim());
+  }
+  return Array.from(unique).slice(0, 12);
+}
 
 // ============================================================
 // GET /api/products — Public catalog with search & category filter
@@ -143,7 +156,14 @@ productRouter.post(
         throw new AppError('A product with this slug or SKU already exists.', 409);
       }
 
-      const product = await prisma.product.create({ data });
+      const galleryUrls = normalizeGallery(data.imageUrl, data.galleryUrls);
+      const product = await prisma.product.create({
+        data: {
+          ...data,
+          imageUrl: galleryUrls[0],
+          galleryUrls,
+        },
+      });
       res.status(201).json({
         success: true,
         message: 'Product created.',
@@ -169,15 +189,29 @@ productRouter.patch(
 
       const existing = await prisma.product.findUnique({
         where: { id },
-        select: { id: true },
+        select: { id: true, imageUrl: true, galleryUrls: true },
       });
       if (!existing) {
         throw new AppError('Product not found.', 404);
       }
 
+      const nextImageUrl = data.imageUrl ?? existing.imageUrl;
+      const nextGalleryUrls =
+        data.galleryUrls !== undefined
+          ? normalizeGallery(nextImageUrl, data.galleryUrls)
+          : data.imageUrl !== undefined
+            ? normalizeGallery(nextImageUrl, existing.galleryUrls)
+            : undefined;
+
       const product = await prisma.product.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          ...(nextGalleryUrls !== undefined && {
+            imageUrl: nextGalleryUrls[0],
+            galleryUrls: nextGalleryUrls,
+          }),
+        },
       });
 
       res.json({

@@ -43,6 +43,7 @@ export interface Product {
   samplePriceINR: number;
   stock: number;
   imageUrl: string;
+  galleryUrls: string[];
   isFeatured: boolean;
   isActive: boolean;
   createdAt: string;

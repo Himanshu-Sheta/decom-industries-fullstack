@@ -43,6 +43,7 @@ const EMPTY_FORM = {
   samplePriceINR: 320,
   stock: 100,
   imageUrl: '/images/product-saree-organizer.jpg',
+  galleryUrls: ['/images/product-saree-organizer.jpg'] as string[],
   isFeatured: false,
   isActive: true,
 };
@@ -66,21 +67,79 @@ export function ProductsTab({
   const [dragActive, setDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
-  const handleImageFile = async (file: File | null | undefined) => {
-    if (!file) return;
+  const handleImageFiles = async (fileList: FileList | null | undefined) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
     setUploading(true);
     setUploadStatus(null);
     try {
-      const res = await uploadApi.productImage(file);
-      setForm((f) => ({ ...f, imageUrl: res.imageUrl }));
+      const uploadedUrls: string[] = [];
+      let totalKB = 0;
+      for (const file of files) {
+        const res = await uploadApi.productImage(file);
+        uploadedUrls.push(res.imageUrl);
+        totalKB += Math.round(res.sizeBytes / 1024);
+      }
+      setForm((f) => {
+        const existing = f.galleryUrls.length > 0 ? f.galleryUrls : [f.imageUrl].filter(Boolean);
+        // Replace default placeholder when creating a brand-new product
+        const base =
+          !editingId &&
+          existing.length === 1 &&
+          existing[0] === EMPTY_FORM.imageUrl
+            ? []
+            : existing;
+        const merged = Array.from(new Set([...base, ...uploadedUrls])).slice(0, 12);
+        return {
+          ...f,
+          imageUrl: merged[0] || uploadedUrls[0],
+          galleryUrls: merged,
+        };
+      });
       setUploadStatus(
-        `Uploaded ${res.filename} (${Math.round(res.sizeBytes / 1024)} KB)`
+        `Uploaded ${uploadedUrls.length} photo${uploadedUrls.length > 1 ? 's' : ''} (${totalKB} KB total)`
       );
     } catch (err) {
       onError(err instanceof ApiError ? err.message : 'Image upload failed.');
     } finally {
       setUploading(false);
     }
+  };
+
+  const setCoverPhoto = (url: string) => {
+    setForm((f) => {
+      const rest = f.galleryUrls.filter((u) => u !== url);
+      return {
+        ...f,
+        imageUrl: url,
+        galleryUrls: [url, ...rest],
+      };
+    });
+  };
+
+  const removeGalleryPhoto = (url: string) => {
+    setForm((f) => {
+      const remaining = f.galleryUrls.filter((u) => u !== url);
+      if (remaining.length === 0) {
+        return { ...f, imageUrl: '', galleryUrls: [] };
+      }
+      return {
+        ...f,
+        imageUrl: remaining[0],
+        galleryUrls: remaining,
+      };
+    });
+  };
+
+  const addPresetPhoto = (url: string) => {
+    setForm((f) => {
+      const merged = Array.from(new Set([...f.galleryUrls, url])).slice(0, 12);
+      return {
+        ...f,
+        imageUrl: f.imageUrl || merged[0],
+        galleryUrls: merged,
+      };
+    });
   };
 
   // Open drawer when parent Top Bar clicks "+ New Product"
@@ -125,6 +184,10 @@ export function ProductsTab({
   const openEdit = (p: Product) => {
     setEditingId(p.id);
     setUploadStatus(null);
+    const gallery =
+      p.galleryUrls && p.galleryUrls.length > 0
+        ? Array.from(new Set([p.imageUrl, ...p.galleryUrls]))
+        : [p.imageUrl];
     setForm({
       name: p.name,
       slug: p.slug,
@@ -139,6 +202,7 @@ export function ProductsTab({
       samplePriceINR: p.samplePriceINR,
       stock: p.stock,
       imageUrl: p.imageUrl,
+      galleryUrls: gallery,
       isFeatured: p.isFeatured,
       isActive: p.isActive,
     });
@@ -298,11 +362,18 @@ export function ProductsTab({
               <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={p.imageUrl}
-                      alt={p.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
-                    />
+                    <div className="relative shrink-0">
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                      />
+                      {p.galleryUrls && p.galleryUrls.length > 1 && (
+                        <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-slate-950 text-white text-[9px] font-bold">
+                          +{p.galleryUrls.length - 1}
+                        </span>
+                      )}
+                    </div>
                     <div className="min-w-0 max-w-[240px]">
                       <div className="font-bold text-slate-950 truncate">{p.name}</div>
                       <div className="text-[11px] text-amber-700 font-semibold">
@@ -471,20 +542,24 @@ export function ProductsTab({
                 onSubmit={handleSave}
                 className="flex-1 overflow-y-auto p-6 space-y-4 text-xs"
               >
-                {/* Upload Product Photo from Computer + Live Preview */}
+                {/* Multi-Photo Upload from Computer + Gallery Manager */}
                 <div className="space-y-3">
-                  <label className="block font-bold text-slate-700">
-                    Product Photo (Upload from Computer or Choose Preset)
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block font-bold text-slate-700">
+                      Product Photos ({form.galleryUrls.length} / 12)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      Select multiple files at once
+                    </span>
+                  </div>
 
-                  {/* Live Preview + Dropzone Row */}
+                  {/* Live Cover Preview + Multi-File Dropzone */}
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
-                    {/* Live Uploaded Photo Preview */}
                     <div className="sm:col-span-5 relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-[4/3]">
                       {form.imageUrl ? (
                         <img
                           src={form.imageUrl}
-                          alt="Product preview"
+                          alt="Product cover preview"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -492,12 +567,11 @@ export function ProductsTab({
                           <ImageIcon className="w-6 h-6" />
                         </div>
                       )}
-                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/75 text-white text-[10px] font-bold">
-                        Live Preview
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/80 text-amber-300 text-[10px] font-bold">
+                        Cover Photo
                       </span>
                     </div>
 
-                    {/* Drag & Drop / File Input */}
                     <label
                       onDragOver={(e) => {
                         e.preventDefault();
@@ -507,7 +581,7 @@ export function ProductsTab({
                       onDrop={(e) => {
                         e.preventDefault();
                         setDragActive(false);
-                        handleImageFile(e.dataTransfer.files?.[0]);
+                        handleImageFiles(e.dataTransfer.files);
                       }}
                       className={`sm:col-span-7 rounded-2xl border-2 border-dashed p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
                         dragActive
@@ -517,10 +591,11 @@ export function ProductsTab({
                     >
                       <input
                         type="file"
+                        multiple
                         accept="image/jpeg,image/png,image/webp"
                         disabled={uploading}
                         onChange={(e) => {
-                          handleImageFile(e.target.files?.[0]);
+                          handleImageFiles(e.target.files);
                           e.target.value = '';
                         }}
                         className="hidden"
@@ -529,17 +604,17 @@ export function ProductsTab({
                         <>
                           <Loader2 className="w-6 h-6 text-amber-600 animate-spin mb-1.5" />
                           <span className="font-bold text-slate-800">
-                            Uploading to Backend...
+                            Uploading photos...
                           </span>
                         </>
                       ) : (
                         <>
                           <UploadCloud className="w-6 h-6 text-amber-600 mb-1.5" />
                           <span className="font-bold text-slate-900">
-                            Click or drag & drop image
+                            Click or drop 1 or multiple images
                           </span>
                           <span className="text-[10px] text-slate-500 mt-0.5">
-                            JPG, PNG, WebP • Max 5 MB • Saved via Express API
+                            JPG, PNG, WebP • Max 5 MB each • Up to 12 photos
                           </span>
                         </>
                       )}
@@ -553,25 +628,72 @@ export function ProductsTab({
                     </div>
                   )}
 
-                  {/* Quick Preset Gallery */}
+                  {/* Active Product Gallery Strip (Reorder Cover / Remove) */}
+                  {form.galleryUrls.length > 0 && (
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Uploaded Gallery (click a photo to set as Cover, × to remove)
+                      </span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {form.galleryUrls.map((url, idx) => {
+                          const isCover = url === form.imageUrl || idx === 0;
+                          return (
+                            <div
+                              key={url}
+                              className={`relative group rounded-xl overflow-hidden border-2 aspect-[4/3] bg-white ${
+                                isCover ? 'border-amber-500' : 'border-slate-200'
+                              }`}
+                            >
+                              <img
+                                src={url}
+                                alt={`Gallery ${idx + 1}`}
+                                onClick={() => setCoverPhoto(url)}
+                                className="w-full h-full object-cover cursor-pointer"
+                              />
+                              {isCover ? (
+                                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[9px] font-extrabold">
+                                  Cover
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setCoverPhoto(url)}
+                                  className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-slate-950/80 text-white text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  Set Cover
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removeGalleryPhoto(url)}
+                                aria-label="Remove photo"
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-slate-950/80 hover:bg-rose-600 text-white flex items-center justify-center"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Preset Gallery (appends to product gallery) */}
                   <div>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
-                      Or pick a Decom preset photo
+                      Or click a Decom preset photo to add to gallery
                     </span>
                     <div className="grid grid-cols-4 gap-2">
                       {DECOM_IMAGES.map((img) => {
-                        const selected = form.imageUrl === img.url;
+                        const inGallery = form.galleryUrls.includes(img.url);
                         return (
                           <button
                             key={img.url}
                             type="button"
-                            onClick={() => {
-                              setForm((f) => ({ ...f, imageUrl: img.url }));
-                              setUploadStatus(null);
-                            }}
+                            onClick={() => addPresetPhoto(img.url)}
                             className={`relative rounded-xl overflow-hidden border-2 aspect-[4/3] transition-all ${
-                              selected
-                                ? 'border-amber-500 ring-2 ring-amber-500/30'
+                              inGallery
+                                ? 'border-amber-500 ring-2 ring-amber-500/20'
                                 : 'border-slate-200 opacity-75 hover:opacity-100'
                             }`}
                           >
@@ -581,6 +703,7 @@ export function ProductsTab({
                               className="w-full h-full object-cover"
                             />
                             <span className="absolute inset-x-0 bottom-0 bg-slate-950/70 text-[9px] text-white px-1 py-0.5 truncate">
+                              {inGallery ? '✓ ' : '+ '}
                               {img.label}
                             </span>
                           </button>
@@ -588,14 +711,6 @@ export function ProductsTab({
                       })}
                     </div>
                   </div>
-
-                  <input
-                    required
-                    value={form.imageUrl}
-                    onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                    placeholder="Uploaded image URL auto-fills here..."
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px]"
-                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

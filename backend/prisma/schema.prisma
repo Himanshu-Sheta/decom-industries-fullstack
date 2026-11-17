@@ -78,6 +78,7 @@ model Product {
   samplePriceINR Int
   stock          Int         @default(100)
   imageUrl       String
+  galleryUrls    String[]    @default([])
   isFeatured     Boolean     @default(false)
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())
