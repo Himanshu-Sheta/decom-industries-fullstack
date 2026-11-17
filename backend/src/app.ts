@@ -1,0 +1,85 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+import { env } from './config/env';
+import { prisma } from './config/prisma';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { authRouter } from './routes/auth.routes';
+import { productRouter } from './routes/product.routes';
+import { orderRouter } from './routes/order.routes';
+import { oemRouter } from './routes/oem.routes';
+import { adminRouter } from './routes/admin.routes';
+
+export const app = express();
+
+// ============================================================
+// 5-Layer Security Shield (runs BEFORE every route!)
+// ============================================================
+
+// 1. Helmet: sets secure HTTP headers (XSS, Clickjacking, MIME-sniffing protection)
+app.use(helmet());
+
+// 2. CORS: ONLY our Frontend URL can call this API & send HttpOnly auth cookies
+app.use(
+  cors({
+    origin: env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+// 3. Rate Limiting: stops brute-force & spam flooding (max 150 requests / 15 mins per IP)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP. Please try again in 15 minutes.',
+  },
+});
+app.use('/api', apiLimiter);
+
+// 4. Body size limit: blocks giant JSON payload attacks
+app.use(express.json({ limit: '100kb' }));
+
+// 5. Cookie parser: reads HttpOnly authentication cookies safely
+app.use(cookieParser());
+
+// ============================================================
+// Health Check Route — verifies Express + Docker PostgreSQL!
+// ============================================================
+app.get('/api/health', async (_req, res, next) => {
+  try {
+    // Run a lightweight SQL query to prove PostgreSQL inside Docker is reachable
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      success: true,
+      service: 'decom-industries-api',
+      environment: env.NODE_ENV,
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================
+// API Routes
+// ============================================================
+app.use('/api/auth', authRouter);
+app.use('/api/products', productRouter);
+app.use('/api/orders', orderRouter);
+app.use('/api/oem-quotes', oemRouter);
+app.use('/api/admin', adminRouter);
+
+// ============================================================
+// Fallback 404 & Centralized Error Handler (must be LAST)
+// ============================================================
+app.use(notFoundHandler);
+app.use(errorHandler);
