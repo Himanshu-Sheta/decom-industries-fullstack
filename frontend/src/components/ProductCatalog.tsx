@@ -186,27 +186,24 @@ export function ProductCatalog() {
         </div>
       )}
 
-      {/* Product Grid */}
+      {/* Product Grid — Pure GPU transitions (no layout thrashing!) */}
       {!loading && !error && (
-        <motion.div
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-        >
-          <AnimatePresence mode="popLayout">
-            {products.map((product, index) => {
-              const qty = getCardQty(product);
-              const outOfStock = product.stock === 0;
-              return (
-                <motion.article
-                  layout
-                  key={product.id}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.25) }}
-                  whileHover={{ y: -4 }}
-                  className="group rounded-3xl bg-white border border-slate-200/80 shadow-card hover:shadow-soft overflow-hidden flex flex-col transition-shadow"
-                >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {products.map((product, index) => {
+            const qty = getCardQty(product);
+            const outOfStock = product.stock === 0;
+            return (
+              <motion.article
+                key={product.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.42,
+                  delay: Math.min(index * 0.045, 0.28),
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="group rounded-3xl bg-white border border-slate-200/80 shadow-card hover:shadow-soft hover:-translate-y-1.5 overflow-hidden flex flex-col transition-[transform,box-shadow] duration-300 ease-out will-change-transform"
+              >
                   {/* Product Image */}
                   <div
                     onClick={() => openQuickView(product)}
@@ -318,11 +315,10 @@ export function ProductCatalog() {
 
                       {/* Dual Buttons: Add to Cart + Instant Checkout */}
                       <div className="grid grid-cols-2 gap-2">
-                        <motion.button
-                          whileTap={{ scale: 0.96 }}
+                        <button
                           disabled={outOfStock}
                           onClick={() => handleCardAdd(product)}
-                          className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                          className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold active:scale-[0.97] transition-[transform,background-color] duration-200 ${
                             addedId === product.id
                               ? 'bg-emerald-600 text-white'
                               : outOfStock
@@ -339,28 +335,26 @@ export function ProductCatalog() {
                               <ShoppingBag className="w-3.5 h-3.5" /> Add ({qty})
                             </>
                           )}
-                        </motion.button>
+                        </button>
 
-                        <motion.button
-                          whileTap={{ scale: 0.96 }}
+                        <button
                           disabled={outOfStock}
                           onClick={() => handleCardBuyNow(product)}
-                          className={`inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-colors ${
+                          className={`inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl text-xs font-bold active:scale-[0.97] transition-[transform,background-color] duration-200 ${
                             outOfStock
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                               : 'bg-amber-500 hover:bg-amber-600 text-white'
                           }`}
                         >
                           <Zap className="w-3.5 h-3.5" /> Buy Now
-                        </motion.button>
+                        </button>
                       </div>
                     </div>
                   </div>
                 </motion.article>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
+            );
+          })}
+        </div>
       )}
 
       {!loading && !error && products.length === 0 && (

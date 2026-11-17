@@ -45,12 +45,15 @@ export function FacilitySection() {
           return (
             <motion.div
               key={card.title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: i * 0.08 }}
-              whileHover={{ y: -4 }}
-              className="rounded-3xl bg-white border border-slate-200/80 p-6 shadow-card"
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{
+                duration: 0.5,
+                delay: i * 0.07,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="rounded-3xl bg-white border border-slate-200/80 p-6 shadow-card hover:shadow-soft hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out will-change-transform"
             >
               <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200/70 flex items-center justify-center mb-4">
                 <Icon className="w-5 h-5 text-amber-600" />
