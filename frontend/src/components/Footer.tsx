@@ -46,7 +46,7 @@ export function Footer() {
             </li>
             <li>
               <Link href="/admin" className="hover:text-amber-400 transition-colors">
-                Admin Dashboard (RBAC Protected)
+                Admin Portal
               </Link>
             </li>
           </ul>
@@ -66,8 +66,8 @@ export function Footer() {
       </div>
 
       <div className="border-t border-slate-800/80 py-4 px-4 text-center text-[11px] text-slate-500">
-        © {new Date().getFullYear()} Decom Industries. Built Full-Stack with Next.js,
-        Express, Prisma, PostgreSQL & Docker.
+        © {new Date().getFullYear()} Decom Industries. All Rights Reserved. Surat,
+        Gujarat, India.
       </div>
     </footer>
   );

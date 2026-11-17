@@ -75,16 +75,16 @@ export function AuthModal() {
             </button>
 
             <div className="mb-5">
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mb-2">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                bcrypt + HttpOnly Cookie Auth
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full mb-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                Decom Industries Account
               </div>
               <h2 className="font-heading text-2xl font-extrabold text-slate-950">
                 {tab === 'login' ? 'Welcome Back' : 'Create Your Account'}
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 {tab === 'login'
-                  ? 'Sign in with your PostgreSQL-backed account.'
+                  ? 'Sign in to view your orders, saved details, and OEM quotes.'
                   : 'Shop retail or wholesale, track orders, and save OEM quotes.'}
               </p>
             </div>

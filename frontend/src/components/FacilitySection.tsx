@@ -22,8 +22,8 @@ const HIGHLIGHTS = [
   },
   {
     icon: Award,
-    title: 'Full-Stack Security Built In',
-    desc: 'Every order total & 18% GST is verified on the Express backend with bcrypt & HttpOnly JWT sessions.',
+    title: 'Direct Factory GST Billing',
+    desc: 'Transparent ex-factory wholesale and retail pricing with instant GST-compliant tax invoices on every order.',
   },
 ];
 

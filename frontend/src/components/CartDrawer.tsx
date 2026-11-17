@@ -152,7 +152,7 @@ export function CartDrawer() {
                     Order Confirmed!
                   </h3>
                   <p className="text-xs text-slate-600">
-                    Saved in PostgreSQL & inventory updated atomically.
+                    Thank you! Your order has been received by our Surat dispatch desk.
                   </p>
                   <div className="inline-block px-4 py-1.5 rounded-xl bg-white border border-emerald-200 font-mono font-bold text-sm text-emerald-800">
                     {placedOrder.orderNumber}
@@ -172,7 +172,7 @@ export function CartDrawer() {
                       </span>
                     </div>
                     <div className="flex justify-between font-bold text-slate-950 pt-1.5 border-t border-slate-100">
-                      <span>Server-Verified Total</span>
+                      <span>Grand Total (incl. GST)</span>
                       <span className="font-mono">
                         ₹{placedOrder.grandTotalINR.toLocaleString('en-IN')}
                       </span>

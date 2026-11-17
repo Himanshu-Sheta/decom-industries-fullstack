@@ -86,8 +86,8 @@ export function OemStudio() {
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed">
               Need custom micron thickness, gold-foil logo screen printing, or bespoke
-              boutique dimensions? Submit your specifications below — saved directly to
-              PostgreSQL and visible inside the Admin Dashboard immediately.
+              boutique dimensions? Submit your specifications below and our Surat
+              production desk will prepare your custom quote &amp; sample timeline.
             </p>
 
             <div className="rounded-3xl bg-[#FAF9F6] border border-slate-200/80 p-5 space-y-3 text-xs">
@@ -119,8 +119,8 @@ export function OemStudio() {
                   OEM Specification Saved!
                 </h3>
                 <p className="text-sm text-slate-600">
-                  Your custom manufacturing inquiry has been recorded in PostgreSQL under
-                  reference:
+                  Your custom manufacturing inquiry has been received by our Surat
+                  production desk under reference:
                 </p>
                 <div className="inline-block px-5 py-2 rounded-2xl bg-white border border-emerald-200 font-mono text-base font-bold text-emerald-800">
                   {submittedQuoteNumber}
@@ -286,7 +286,7 @@ export function OemStudio() {
                   className="w-full py-3.5 rounded-2xl bg-slate-950 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Send className="w-4 h-4" />
-                  {submitting ? 'Saving to PostgreSQL...' : 'Submit Custom OEM Quote'}
+                  {submitting ? 'Submitting Inquiry...' : 'Submit Custom OEM Quote'}
                 </motion.button>
               </form>
             )}
