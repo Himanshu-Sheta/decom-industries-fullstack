@@ -135,7 +135,7 @@ export function HeroSection() {
               <motion.img
                 style={{ y: imageY, scale: imageScale }}
                 src="/images/hero-factory.jpg"
-                alt="Decom Industries Surat Cleanroom Packaging Facility"
+                alt="Decom Industries Surat Manufacturing Facility"
                 className="w-full h-full object-cover will-change-transform"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />

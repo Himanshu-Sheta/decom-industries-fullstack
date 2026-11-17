@@ -7,8 +7,8 @@ import { Factory, ShieldCheck, Truck, Award } from 'lucide-react';
 const HIGHLIGHTS = [
   {
     icon: Factory,
-    title: '45,000 sq.ft Surat Cleanroom',
-    desc: 'Automated die-cutting, polymer rolling, and ultrasonic seam welding under strict dust-free inspection.',
+    title: 'Surat Manufacturing Unit',
+    desc: 'Modern in-house production with automated die-cutting, polymer rolling, and ultrasonic seam welding.',
   },
   {
     icon: ShieldCheck,

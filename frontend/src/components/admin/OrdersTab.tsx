@@ -259,7 +259,7 @@ export function OrdersTab({
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-wider text-amber-600">
-                    Tax Invoice • GSTIN 24AAYFD0203E1ZU
+                    Order Tax Invoice • Decom Industries
                   </div>
                   <h3 className="font-heading font-extrabold text-lg text-slate-950 font-mono">
                     {selectedOrder.orderNumber}

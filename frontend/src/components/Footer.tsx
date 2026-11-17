@@ -19,8 +19,8 @@ export function Footer() {
             Surat’s manufacturer of crystal PVC saree covers, foldable wardrobe closet
             cubes, bridal jewelry organizers, and custom OEM apparel packaging.
           </p>
-          <p className="text-[11px] font-mono text-slate-500">
-            GSTIN: 24AAYFD0203E1ZU • Surat, Gujarat, India
+          <p className="text-[11px] font-medium text-slate-500">
+            Surat, Gujarat, India • Direct Manufacturer
           </p>
         </div>
 
@@ -46,7 +46,7 @@ export function Footer() {
             </li>
             <li>
               <Link href="/#facility" className="hover:text-amber-400 transition-colors">
-                Surat Cleanroom Facility
+                Our Surat Facility
               </Link>
             </li>
           </ul>

@@ -25,8 +25,8 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>
-              Surat Cleanroom Facility •{' '}
-              <strong className="text-white font-semibold">GSTIN: 24AAYFD0203E1ZU</strong>
+              Surat Manufacturing Facility •{' '}
+              <strong className="text-white font-semibold">Direct Factory Supply</strong>
             </span>
           </div>
           <div className="hidden sm:flex items-center gap-4 text-slate-300">

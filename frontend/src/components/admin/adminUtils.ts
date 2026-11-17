@@ -8,7 +8,7 @@ export const DECOM_IMAGES = [
   { label: 'Jumbo Blanket Bag', url: '/images/decom-blanket-bedsheet-storage-angle-1.jpg' },
   { label: 'Vanity Pouch', url: '/images/decom-transparent-vanity-pouch-angle-1.jpg' },
   { label: 'Bridal Combo Set', url: '/images/decom-combo-storage-set-angle-1.jpg' },
-  { label: 'Surat Cleanroom', url: '/images/hero-factory.jpg' },
+  { label: 'Surat Facility', url: '/images/hero-factory.jpg' },
 ];
 
 export const ORDER_STATUS_META: Record<

@@ -134,7 +134,7 @@ const SEED_PRODUCTS = [
     category: 'Value Combos',
     tagline: 'Curated wedding packing bundle: 8 Saree Covers, 2 Closet Cubes, 2 Jewelry Kits.',
     description:
-      'Our flagship wedding and boutique gift set manufactured at our Surat cleanroom facility. Color-matched champagne gold accents across every piece.',
+      'Our flagship wedding and boutique gift set manufactured at our Surat production facility. Color-matched champagne gold accents across every piece.',
     materialSpec: 'Mixed Virgin PVC & 100 GSM Non-Woven Suite',
     dimensions: 'Assorted 12-Piece Master Pack',
     moq: 1,
