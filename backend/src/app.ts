@@ -22,9 +22,22 @@ export const app = express();
 app.use(helmet());
 
 // 2. CORS: ONLY our Frontend URL can call this API & send HttpOnly auth cookies
+const allowedOrigins = new Set([
+  env.FRONTEND_URL,
+  ...(env.NODE_ENV === 'development'
+    ? ['http://localhost:3000', 'http://127.0.0.1:3000']
+    : []),
+]);
+
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

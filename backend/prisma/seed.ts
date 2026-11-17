@@ -90,7 +90,7 @@ const SEED_PRODUCTS = [
     priceINR: 290,
     samplePriceINR: 350,
     stock: 195,
-    imageUrl: '/images/product-closet-storage.jpg',
+    imageUrl: '/images/decom-handbag-purse-organizer-angle-1.jpg',
     isFeatured: false,
   },
   {
@@ -107,7 +107,7 @@ const SEED_PRODUCTS = [
     priceINR: 380,
     samplePriceINR: 450,
     stock: 310,
-    imageUrl: '/images/product-closet-storage.jpg',
+    imageUrl: '/images/decom-blanket-bedsheet-storage-angle-1.jpg',
     isFeatured: true,
   },
   {
@@ -124,7 +124,7 @@ const SEED_PRODUCTS = [
     priceINR: 185,
     samplePriceINR: 240,
     stock: 340,
-    imageUrl: '/images/product-jewelry-kit.jpg',
+    imageUrl: '/images/decom-transparent-vanity-pouch-angle-1.jpg',
     isFeatured: false,
   },
   {
@@ -141,7 +141,7 @@ const SEED_PRODUCTS = [
     priceINR: 2499,
     samplePriceINR: 2499,
     stock: 65,
-    imageUrl: '/images/product-saree-organizer.jpg',
+    imageUrl: '/images/decom-combo-storage-set-angle-1.jpg',
     isFeatured: true,
   },
 ];
@@ -206,7 +206,7 @@ async function main() {
   for (const product of SEED_PRODUCTS) {
     await prisma.product.upsert({
       where: { slug: product.slug },
-      update: {},
+      update: { imageUrl: product.imageUrl },
       create: product,
     });
   }

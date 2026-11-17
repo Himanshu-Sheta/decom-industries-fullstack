@@ -1,7 +1,11 @@
 # ============================================================
-# Decom Industries — Local Development Docker Infrastructure
-# Step 2: PostgreSQL 16 Database + Adminer Web UI
-# (In Step 8, we will also add the Backend & Frontend services!)
+# Decom Industries — Full-Stack Docker Compose Architecture
+#
+# Local Dev (DB + UI only):
+#   docker compose up -d postgres adminer
+#
+# Full Production-Style Stack (All 4 Services):
+#   docker compose up --build
 # ============================================================
 
 services:
@@ -16,7 +20,6 @@ services:
     ports:
       - "${POSTGRES_PORT:-5439}:5432"
     volumes:
-      # Named volume keeps your database data even if you delete/recreate the container
       - decom_pg_data:/var/lib/postgresql/data
     networks:
       - decom-network
@@ -35,6 +38,53 @@ services:
         condition: service_healthy
     ports:
       - "${ADMINER_PORT:-8081}:8080"
+    networks:
+      - decom-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: decom-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      # Inside Docker network, backend connects to hostname `postgres` on internal port 5432!
+      DATABASE_URL: postgresql://${POSTGRES_USER:-decom_admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-decom_store}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required in .env}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # Set COOKIE_SECURE=true when deploying behind HTTPS in real production
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "${PORT:-4000}:4000"
+    networks:
+      - decom-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+    container_name: decom-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
     networks:
       - decom-network
 

@@ -1,0 +1,62 @@
+# ============================================================
+# GitHub Actions CI Pipeline for Decom Industries Full-Stack
+#
+# HOW TO ACTIVATE ON GITHUB:
+# Option A (Easiest — works with any token):
+#   On GitHub -> Actions -> "set up a workflow yourself" ->
+#   name it `.github/workflows/ci.yml` and paste this file!
+# Option B (Via Git push):
+#   Enable the `workflow` scope on your GitHub Personal Access Token,
+#   then move this file to `.github/workflows/ci.yml` and push.
+# ============================================================
+
+name: Full-Stack CI (Typecheck, Lint & Build)
+
+on:
+  push:
+    branches: [main, dev, "feat/**", "infra/**"]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  backend-ci:
+    name: Backend (Prisma + TypeScript Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm run build
+
+  frontend-ci:
+    name: Frontend (ESLint + TypeScript + Next.js Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
