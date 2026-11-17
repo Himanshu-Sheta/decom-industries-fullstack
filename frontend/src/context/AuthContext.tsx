@@ -10,9 +10,10 @@ interface AuthContextValue {
   isAuthModalOpen: boolean;
   authModalTab: 'login' | 'register';
   isAccountModalOpen: boolean;
+  accountModalTab: 'profile' | 'orders' | 'quotes';
   openAuthModal: (tab?: 'login' | 'register') => void;
   closeAuthModal: () => void;
-  openAccountModal: () => void;
+  openAccountModal: (tab?: 'profile' | 'orders' | 'quotes') => void;
   closeAccountModal: () => void;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   register: (data: {
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [accountModalTab, setAccountModalTab] = useState<'profile' | 'orders' | 'quotes'>('profile');
 
   // Hydrate logged-in user directly from Backend HttpOnly Cookie on mount!
   const refreshUser = useCallback(async () => {
@@ -64,7 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const closeAuthModal = () => setIsAuthModalOpen(false);
-  const openAccountModal = () => setIsAccountModalOpen(true);
+  const openAccountModal = (tab: 'profile' | 'orders' | 'quotes' = 'profile') => {
+    setAccountModalTab(tab);
+    setIsAccountModalOpen(true);
+  };
   const closeAccountModal = () => setIsAccountModalOpen(false);
 
   const login = async (email: string, password: string) => {
@@ -140,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthModalOpen,
         authModalTab,
         isAccountModalOpen,
+        accountModalTab,
         openAuthModal,
         closeAuthModal,
         openAccountModal,

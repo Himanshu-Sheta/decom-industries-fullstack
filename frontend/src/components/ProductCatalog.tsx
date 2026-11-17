@@ -11,6 +11,9 @@ import {
   PackageCheck,
   AlertCircle,
   X,
+  Plus,
+  Minus,
+  Zap,
 } from 'lucide-react';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
@@ -27,6 +30,8 @@ export function ProductCatalog() {
   const [error, setError] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [modalQty, setModalQty] = useState(1);
+  const [cardQuantities, setCardQuantities] = useState<Record<string, number>>({});
   const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
@@ -61,11 +66,37 @@ export function ProductCatalog() {
     return () => clearTimeout(timer);
   }, [activeCategory, search, refreshTick]);
 
-  const handleQuickAdd = (product: Product) => {
-    addToCart(product, 1);
-    setAddedId(product.id);
-    setTimeout(() => setAddedId(null), 1200);
+  const getCardQty = (p: Product) => {
+    const saved = cardQuantities[p.id] ?? 1;
+    return Math.min(Math.max(1, saved), Math.max(1, p.stock));
   };
+
+  const setCardQty = (p: Product, next: number) => {
+    const clamped = Math.min(Math.max(1, next || 1), Math.max(1, p.stock));
+    setCardQuantities((prev) => ({ ...prev, [p.id]: clamped }));
+  };
+
+  const handleCardAdd = (product: Product) => {
+    const qty = getCardQty(product);
+    addToCart(product, qty);
+    setAddedId(product.id);
+    setTimeout(() => setAddedId(null), 1300);
+  };
+
+  const handleCardBuyNow = (product: Product) => {
+    const qty = getCardQty(product);
+    addToCart(product, qty);
+    openCart();
+  };
+
+  const openQuickView = (product: Product) => {
+    setSelectedProduct(product);
+    setModalQty(getCardQty(product));
+  };
+
+  const quickPresets = selectedProduct
+    ? [1, 5, 10, 25, 50].filter((n) => n <= selectedProduct.stock)
+    : [];
 
   return (
     <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-24">
@@ -79,11 +110,8 @@ export function ProductCatalog() {
             Apparel Covers & Organization Systems
           </h2>
           <p className="text-sm text-slate-600 mt-2 max-w-xl">
-            Every product below is loaded live from your Docker PostgreSQL database via{' '}
-            <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">
-              GET /api/products
-            </code>
-            .
+            Pick your exact quantity on any product card (retail or bulk) and check out
+            with instant server-verified GST billing.
           </p>
         </div>
 
@@ -109,7 +137,9 @@ export function ProductCatalog() {
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`relative px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                isActive ? 'text-white' : 'text-slate-600 hover:text-slate-950 bg-white border border-slate-200'
+                isActive
+                  ? 'text-white'
+                  : 'text-slate-600 hover:text-slate-950 bg-white border border-slate-200'
               }`}
             >
               {isActive && (
@@ -163,111 +193,172 @@ export function ProductCatalog() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           <AnimatePresence mode="popLayout">
-            {products.map((product, index) => (
-              <motion.article
-                layout
-                key={product.id}
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.25) }}
-                whileHover={{ y: -4 }}
-                className="group rounded-3xl bg-white border border-slate-200/80 shadow-card hover:shadow-soft overflow-hidden flex flex-col transition-shadow"
-              >
-                {/* Product Image */}
-                <div
-                  onClick={() => setSelectedProduct(product)}
-                  className="relative aspect-[4/3] overflow-hidden bg-slate-100 cursor-pointer"
+            {products.map((product, index) => {
+              const qty = getCardQty(product);
+              const outOfStock = product.stock === 0;
+              return (
+                <motion.article
+                  layout
+                  key={product.id}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.25) }}
+                  whileHover={{ y: -4 }}
+                  className="group rounded-3xl bg-white border border-slate-200/80 shadow-card hover:shadow-soft overflow-hidden flex flex-col transition-shadow"
                 >
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur text-[10px] font-bold uppercase tracking-wide text-amber-700 shadow-sm">
-                      {product.category}
-                    </span>
-                  </div>
-                  {product.stock <= 25 && (
-                    <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-rose-600 text-white text-[10px] font-bold">
-                      Only {product.stock} left
-                    </span>
-                  )}
-                </div>
-
-                {/* Card Body */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="text-[11px] font-mono text-slate-400 mb-1">
-                    {product.sku}
-                  </div>
-                  <h3
-                    onClick={() => setSelectedProduct(product)}
-                    className="font-heading font-bold text-slate-950 text-base leading-snug cursor-pointer hover:text-amber-700 transition-colors"
+                  {/* Product Image */}
+                  <div
+                    onClick={() => openQuickView(product)}
+                    className="relative aspect-[4/3] overflow-hidden bg-slate-100 cursor-pointer"
                   >
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">
-                    {product.tagline}
-                  </p>
-
-                  {/* Spec Pill Box */}
-                  <div className="mt-4 p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-[11px]">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <Layers className="w-3 h-3" /> Spec
-                      </span>
-                      <span className="font-semibold text-slate-700 truncate max-w-[155px]">
-                        {product.materialSpec}
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur text-[10px] font-bold uppercase tracking-wide text-amber-700 shadow-sm">
+                        {product.category}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <Ruler className="w-3 h-3" /> Size
+                    {product.stock <= 25 && (
+                      <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                        {outOfStock ? 'Out of stock' : `Only ${product.stock} left`}
                       </span>
-                      <span className="font-semibold text-slate-700">
-                        {product.dimensions}
-                      </span>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Price & Add Button */}
-                  <div className="mt-auto pt-4 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-heading text-xl font-extrabold text-slate-950">
-                        ₹{product.priceINR.toLocaleString('en-IN')}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-medium">
-                        In stock: {product.stock}
-                      </div>
+                  {/* Card Body */}
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="text-[11px] font-mono text-slate-400 mb-1">
+                      {product.sku}
                     </div>
-
-                    <motion.button
-                      whileTap={{ scale: 0.94 }}
-                      disabled={product.stock === 0}
-                      onClick={() => handleQuickAdd(product)}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        addedId === product.id
-                          ? 'bg-emerald-600 text-white'
-                          : product.stock === 0
-                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                            : 'bg-slate-950 hover:bg-amber-600 text-white'
-                      }`}
+                    <h3
+                      onClick={() => openQuickView(product)}
+                      className="font-heading font-bold text-slate-950 text-base leading-snug cursor-pointer hover:text-amber-700 transition-colors"
                     >
-                      {addedId === product.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" /> Added
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag className="w-3.5 h-3.5" /> Add
-                        </>
-                      )}
-                    </motion.button>
+                      {product.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">
+                      {product.tagline}
+                    </p>
+
+                    {/* Spec Pill Box */}
+                    <div className="mt-3.5 p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-slate-400 flex items-center gap-1">
+                          <Layers className="w-3 h-3" /> Spec
+                        </span>
+                        <span className="font-semibold text-slate-700 truncate max-w-[155px]">
+                          {product.materialSpec}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-slate-400 flex items-center gap-1">
+                          <Ruler className="w-3 h-3" /> Size
+                        </span>
+                        <span className="font-semibold text-slate-700">
+                          {product.dimensions}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Price + Quantity Selector + Add/Buy Actions */}
+                    <div className="mt-auto pt-4 space-y-3">
+                      <div className="flex items-end justify-between gap-2">
+                        <div>
+                          <div className="font-heading text-xl font-extrabold text-slate-950 tabular-nums">
+                            ₹{product.priceINR.toLocaleString('en-IN')}
+                            <span className="text-[11px] font-normal text-slate-400">
+                              {' '}
+                              / unit
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-medium">
+                            {qty > 1
+                              ? `Subtotal: ₹${(product.priceINR * qty).toLocaleString('en-IN')}`
+                              : `In stock: ${product.stock}`}
+                          </div>
+                        </div>
+
+                        {/* Interactive Quantity Stepper */}
+                        {!outOfStock && (
+                          <div className="inline-flex items-center rounded-xl bg-slate-50 border border-slate-200 p-0.5">
+                            <button
+                              type="button"
+                              aria-label="Decrease quantity"
+                              onClick={() => setCardQty(product, qty - 1)}
+                              className="w-7 h-7 rounded-lg hover:bg-white text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="number"
+                              min={1}
+                              max={product.stock}
+                              value={qty}
+                              onChange={(e) =>
+                                setCardQty(product, parseInt(e.target.value, 10))
+                              }
+                              aria-label="Quantity"
+                              className="w-10 text-center bg-transparent text-xs font-extrabold text-slate-950 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <button
+                              type="button"
+                              aria-label="Increase quantity"
+                              onClick={() => setCardQty(product, qty + 1)}
+                              className="w-7 h-7 rounded-lg hover:bg-white text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Dual Buttons: Add to Cart + Instant Checkout */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <motion.button
+                          whileTap={{ scale: 0.96 }}
+                          disabled={outOfStock}
+                          onClick={() => handleCardAdd(product)}
+                          className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                            addedId === product.id
+                              ? 'bg-emerald-600 text-white'
+                              : outOfStock
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-slate-950 hover:bg-slate-800 text-white'
+                          }`}
+                        >
+                          {addedId === product.id ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" /> Added
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingBag className="w-3.5 h-3.5" /> Add ({qty})
+                            </>
+                          )}
+                        </motion.button>
+
+                        <motion.button
+                          whileTap={{ scale: 0.96 }}
+                          disabled={outOfStock}
+                          onClick={() => handleCardBuyNow(product)}
+                          className={`inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-colors ${
+                            outOfStock
+                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              : 'bg-amber-500 hover:bg-amber-600 text-white'
+                          }`}
+                        >
+                          <Zap className="w-3.5 h-3.5" /> Buy Now
+                        </motion.button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.article>
-            ))}
+                </motion.article>
+              );
+            })}
           </AnimatePresence>
         </motion.div>
       )}
@@ -289,7 +380,7 @@ export function ProductCatalog() {
         </div>
       )}
 
-      {/* Product Quick View Modal */}
+      {/* Product Quick View Modal (with Quantity Presets & Live Total) */}
       <AnimatePresence>
         {selectedProduct && (
           <motion.div
@@ -328,11 +419,11 @@ export function ProductCatalog() {
                 <h3 className="font-heading text-xl font-extrabold text-slate-950 mt-1">
                   {selectedProduct.name}
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed mt-3">
+                <p className="text-xs text-slate-600 leading-relaxed mt-2.5">
                   {selectedProduct.description}
                 </p>
 
-                <div className="mt-4 space-y-2 text-xs border-t border-slate-100 pt-4">
+                <div className="mt-4 space-y-1.5 text-xs border-t border-slate-100 pt-3">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Material</span>
                     <span className="font-semibold text-slate-800 text-right">
@@ -348,28 +439,112 @@ export function ProductCatalog() {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Available Stock</span>
                     <span className="font-semibold text-emerald-700 inline-flex items-center gap-1">
-                      <PackageCheck className="w-3.5 h-3.5" /> {selectedProduct.stock} units
+                      <PackageCheck className="w-3.5 h-3.5" /> {selectedProduct.stock}{' '}
+                      units
                     </span>
                   </div>
                 </div>
 
-                <div className="mt-auto pt-6 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="font-heading text-2xl font-extrabold text-slate-950">
-                      ₹{selectedProduct.priceINR.toLocaleString('en-IN')}
+                {/* Quantity Selector + Quick Bulk Presets */}
+                {selectedProduct.stock > 0 && (
+                  <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">
+                        Select Quantity
+                      </span>
+                      <div className="inline-flex items-center rounded-xl bg-white border border-slate-200 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setModalQty((q) => Math.max(1, q - 1))}
+                          className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <input
+                          type="number"
+                          min={1}
+                          max={selectedProduct.stock}
+                          value={modalQty}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10) || 1;
+                            setModalQty(
+                              Math.min(Math.max(1, val), selectedProduct.stock)
+                            );
+                          }}
+                          className="w-12 text-center text-xs font-extrabold text-slate-950 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setModalQty((q) => Math.min(selectedProduct.stock, q + 1))
+                          }
+                          className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-400">+ 18% GST at checkout</div>
+
+                    {quickPresets.length > 1 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {quickPresets.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setModalQty(preset)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                              modalQty === preset
+                                ? 'bg-slate-950 text-white'
+                                : 'bg-white border border-slate-200 text-slate-600 hover:border-amber-500'
+                            }`}
+                          >
+                            {preset} pcs
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => {
-                      addToCart(selectedProduct, 1);
-                      setSelectedProduct(null);
-                      openCart();
-                    }}
-                    className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors"
-                  >
-                    Add & Checkout
-                  </button>
+                )}
+
+                <div className="mt-auto pt-4 space-y-3">
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <div className="font-heading text-2xl font-extrabold text-slate-950 tabular-nums">
+                        ₹
+                        {(selectedProduct.priceINR * modalQty).toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        ₹{selectedProduct.priceINR.toLocaleString('en-IN')} × {modalQty}{' '}
+                        (+ 18% GST at checkout)
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      disabled={selectedProduct.stock === 0}
+                      onClick={() => {
+                        addToCart(selectedProduct, modalQty);
+                        setCardQty(selectedProduct, modalQty);
+                        setSelectedProduct(null);
+                      }}
+                      className="py-3 rounded-xl bg-slate-950 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold transition-colors"
+                    >
+                      Add {modalQty} to Cart
+                    </button>
+                    <button
+                      disabled={selectedProduct.stock === 0}
+                      onClick={() => {
+                        addToCart(selectedProduct, modalQty);
+                        setCardQty(selectedProduct, modalQty);
+                        setSelectedProduct(null);
+                        openCart();
+                      }}
+                      className="py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold transition-colors"
+                    >
+                      Buy Now & Checkout
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

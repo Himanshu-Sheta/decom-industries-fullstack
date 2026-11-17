@@ -94,7 +94,7 @@ export function Navbar() {
               <motion.button
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={openAccountModal}
+                onClick={() => openAccountModal('profile')}
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-semibold transition-colors"
               >
                 <span className="w-6 h-6 rounded-full bg-slate-900 text-amber-400 text-[11px] font-bold flex items-center justify-center">

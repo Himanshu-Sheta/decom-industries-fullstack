@@ -17,8 +17,14 @@ import { ordersApi, oemApi } from '@/lib/api';
 import type { Order, OemQuote } from '@/lib/types';
 
 export function AccountModal() {
-  const { user, isAccountModalOpen, closeAccountModal, logout, updateProfile } =
-    useAuth();
+  const {
+    user,
+    isAccountModalOpen,
+    accountModalTab,
+    closeAccountModal,
+    logout,
+    updateProfile,
+  } = useAuth();
   const [tab, setTab] = useState<'profile' | 'orders' | 'quotes'>('profile');
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<OemQuote[]>([]);
@@ -32,6 +38,7 @@ export function AccountModal() {
 
   useEffect(() => {
     if (user && isAccountModalOpen) {
+      setTab(accountModalTab);
       setName(user.name);
       setPhone(user.phone);
       setCity(user.city || '');
@@ -46,7 +53,7 @@ export function AccountModal() {
         .catch(() => {})
         .finally(() => setLoadingData(false));
     }
-  }, [user, isAccountModalOpen]);
+  }, [user, isAccountModalOpen, accountModalTab]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
