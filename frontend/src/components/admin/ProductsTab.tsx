@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
+  Minus,
   Search,
   Download,
   Edit3,
@@ -69,6 +70,7 @@ export function ProductsTab({
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
 
   const handleImageFiles = async (fileList: FileList | null | undefined) => {
     if (!fileList || fileList.length === 0) return;
@@ -270,14 +272,24 @@ export function ProductsTab({
     }
   };
 
-  const handleStockDelta = async (p: Product, delta: number) => {
+  const handleStockSet = async (p: Product, targetStock: number) => {
+    const cleanStock = Math.max(0, Math.floor(targetStock));
+    setStockDrafts((prev) => {
+      const next = { ...prev };
+      delete next[p.id];
+      return next;
+    });
+    if (cleanStock === p.stock) return;
     try {
-      const nextStock = Math.max(0, p.stock + delta);
-      await productsApi.update(p.id, { stock: nextStock });
-      onChanged(`${p.sku} stock updated → ${nextStock}`);
+      await productsApi.update(p.id, { stock: cleanStock });
+      onChanged(`${p.sku} stock updated → ${cleanStock}`);
     } catch (err) {
       onError(err instanceof ApiError ? err.message : 'Stock update failed.');
     }
+  };
+
+  const handleStockDelta = async (p: Product, delta: number) => {
+    await handleStockSet(p, p.stock + delta);
   };
 
   const handleToggleFeatured = async (p: Product) => {
@@ -394,7 +406,7 @@ export function ProductsTab({
               <th className="px-5 py-3.5">Product</th>
               <th className="px-4 py-3.5">SKU / Spec</th>
               <th className="px-4 py-3.5">Price</th>
-              <th className="px-4 py-3.5">Quick Stock Control</th>
+              <th className="px-4 py-3.5">Stock</th>
               <th className="px-4 py-3.5">Visibility</th>
               <th className="px-5 py-3.5 text-right">Actions</th>
             </tr>
@@ -443,35 +455,53 @@ export function ProductsTab({
                   </div>
                 </td>
                 <td className="px-4 py-3.5">
-                  <div className="inline-flex items-center gap-1.5">
+                  <div className="inline-flex items-center rounded-xl bg-slate-50 border border-slate-200 p-0.5 shadow-sm">
                     <button
-                      onClick={() => handleStockDelta(p, -10)}
-                      className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px]"
+                      type="button"
+                      aria-label="Decrease stock by 1"
+                      onClick={() => handleStockDelta(p, -1)}
+                      disabled={p.stock <= 0}
+                      className="w-7 h-7 rounded-lg hover:bg-white disabled:opacity-40 text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
                     >
-                      -10
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span
-                      className={`min-w-[42px] text-center font-mono font-extrabold text-xs px-2 py-1 rounded-lg ${
+                    <input
+                      type="number"
+                      min={0}
+                      aria-label={`Stock for ${p.name}`}
+                      value={stockDrafts[p.id] ?? String(p.stock)}
+                      onChange={(e) =>
+                        setStockDrafts((prev) => ({
+                          ...prev,
+                          [p.id]: e.target.value,
+                        }))
+                      }
+                      onBlur={() => {
+                        const raw = stockDrafts[p.id];
+                        if (raw === undefined) return;
+                        const parsed = parseInt(raw, 10);
+                        handleStockSet(p, Number.isNaN(parsed) ? p.stock : parsed);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          (e.currentTarget as HTMLInputElement).blur();
+                        }
+                      }}
+                      className={`w-14 text-center bg-transparent font-mono font-extrabold text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                         p.stock <= 25
-                          ? 'bg-rose-50 text-rose-700'
+                          ? 'text-rose-600'
                           : p.stock <= 50
-                            ? 'bg-amber-50 text-amber-800'
-                            : 'bg-emerald-50 text-emerald-700'
+                            ? 'text-amber-700'
+                            : 'text-emerald-700'
                       }`}
-                    >
-                      {p.stock}
-                    </span>
+                    />
                     <button
-                      onClick={() => handleStockDelta(p, 10)}
-                      className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px]"
+                      type="button"
+                      aria-label="Increase stock by 1"
+                      onClick={() => handleStockDelta(p, 1)}
+                      className="w-7 h-7 rounded-lg hover:bg-white text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
                     >
-                      +10
-                    </button>
-                    <button
-                      onClick={() => handleStockDelta(p, 50)}
-                      className="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px]"
-                    >
-                      +50
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </td>
