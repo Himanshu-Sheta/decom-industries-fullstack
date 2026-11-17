@@ -195,6 +195,21 @@ productRouter.patch(
         throw new AppError('Product not found.', 404);
       }
 
+      // Check slug/SKU uniqueness against other products
+      if (data.slug || data.sku) {
+        const orChecks = [
+          ...(data.slug ? [{ slug: data.slug }] : []),
+          ...(data.sku ? [{ sku: data.sku }] : []),
+        ];
+        const collision = await prisma.product.findFirst({
+          where: { id: { not: id }, OR: orChecks },
+          select: { id: true },
+        });
+        if (collision) {
+          throw new AppError('Another product already uses this slug or SKU.', 409);
+        }
+      }
+
       const nextImageUrl = data.imageUrl ?? existing.imageUrl;
       const nextGalleryUrls =
         data.galleryUrls !== undefined

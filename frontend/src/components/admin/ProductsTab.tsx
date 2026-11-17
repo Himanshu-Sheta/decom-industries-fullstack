@@ -16,6 +16,9 @@ import {
   UploadCloud,
   Loader2,
   Image as ImageIcon,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { productsApi, uploadApi, ApiError } from '@/lib/api';
 import type { Product } from '@/lib/types';
@@ -104,6 +107,45 @@ export function ProductsTab({
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleReplaceCover = async (file: File | null | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    setUploadStatus(null);
+    try {
+      const res = await uploadApi.productImage(file);
+      setForm((f) => {
+        const rest = f.galleryUrls.filter((u) => u !== f.imageUrl && u !== res.imageUrl);
+        return {
+          ...f,
+          imageUrl: res.imageUrl,
+          galleryUrls: [res.imageUrl, ...rest].slice(0, 12),
+        };
+      });
+      setUploadStatus(
+        `Replaced cover photo with ${res.filename} (${Math.round(res.sizeBytes / 1024)} KB)`
+      );
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : 'Cover upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const moveGalleryPhoto = (idx: number, delta: -1 | 1) => {
+    setForm((f) => {
+      const target = idx + delta;
+      if (target < 0 || target >= f.galleryUrls.length) return f;
+      const copy = [...f.galleryUrls];
+      const [moved] = copy.splice(idx, 1);
+      copy.splice(target, 0, moved);
+      return {
+        ...f,
+        imageUrl: copy[0],
+        galleryUrls: copy,
+      };
+    });
   };
 
   const setCoverPhoto = (url: string) => {
@@ -361,12 +403,16 @@ export function ProductsTab({
             {filtered.map((p) => (
               <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
                 <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-3">
+                  <div
+                    onClick={() => openEdit(p)}
+                    className="flex items-center gap-3 cursor-pointer group"
+                    title="Click to update product & photos"
+                  >
                     <div className="relative shrink-0">
                       <img
                         src={p.imageUrl}
                         alt={p.name}
-                        className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-200 group-hover:border-amber-500 transition-colors"
                       />
                       {p.galleryUrls && p.galleryUrls.length > 1 && (
                         <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-slate-950 text-white text-[9px] font-bold">
@@ -375,7 +421,9 @@ export function ProductsTab({
                       )}
                     </div>
                     <div className="min-w-0 max-w-[240px]">
-                      <div className="font-bold text-slate-950 truncate">{p.name}</div>
+                      <div className="font-bold text-slate-950 truncate group-hover:text-amber-700 transition-colors">
+                        {p.name}
+                      </div>
                       <div className="text-[11px] text-amber-700 font-semibold">
                         {p.category}
                       </div>
@@ -463,12 +511,20 @@ export function ProductsTab({
                   </div>
                 </td>
                 <td className="px-5 py-3.5 text-right">
-                  <div className="inline-flex items-center gap-1">
+                  <div className="inline-flex items-center gap-1.5">
                     <button
                       onClick={() => openEdit(p)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-700 font-bold text-[11px] transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-500 border border-amber-200 hover:border-amber-500 text-amber-900 hover:text-white font-bold text-[11px] transition-colors"
+                      title="Update product photos"
                     >
-                      <Edit3 className="w-3.5 h-3.5" /> Edit
+                      <Camera className="w-3.5 h-3.5" /> Photos
+                    </button>
+                    <button
+                      onClick={() => openEdit(p)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-amber-600 text-white font-bold text-[11px] transition-colors"
+                      title="Update product details, price, stock & images"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" /> Update
                     </button>
                     {!p.isActive && (
                       <button
@@ -523,10 +579,10 @@ export function ProductsTab({
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
                   <h3 className="font-heading font-extrabold text-lg text-slate-950">
-                    {editingId ? 'Edit Product' : 'Add New Product'}
+                    {editingId ? 'Update Product & Photos' : 'Add New Product'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Changes sync live to your Storefront & PostgreSQL database
+                    Update details, pricing, stock, or upload &amp; reorder product photos
                   </p>
                 </div>
                 <button
@@ -570,6 +626,19 @@ export function ProductsTab({
                       <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/80 text-amber-300 text-[10px] font-bold">
                         Cover Photo
                       </span>
+                      <label className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-white/95 hover:bg-amber-500 hover:text-white text-slate-900 text-[10px] font-bold shadow cursor-pointer inline-flex items-center gap-1 transition-colors">
+                        <Camera className="w-3 h-3" /> Replace Cover
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          disabled={uploading}
+                          onChange={(e) => {
+                            handleReplaceCover(e.target.files?.[0]);
+                            e.target.value = '';
+                          }}
+                          className="hidden"
+                        />
+                      </label>
                     </div>
 
                     <label
@@ -671,6 +740,30 @@ export function ProductsTab({
                               >
                                 <X className="w-3 h-3" />
                               </button>
+                              {form.galleryUrls.length > 1 && (
+                                <div className="absolute top-1 left-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {idx > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => moveGalleryPhoto(idx, -1)}
+                                      aria-label="Move photo left"
+                                      className="w-5 h-5 rounded-full bg-slate-950/80 hover:bg-amber-500 text-white flex items-center justify-center"
+                                    >
+                                      <ChevronLeft className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                  {idx < form.galleryUrls.length - 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => moveGalleryPhoto(idx, 1)}
+                                      aria-label="Move photo right"
+                                      className="w-5 h-5 rounded-full bg-slate-950/80 hover:bg-amber-500 text-white flex items-center justify-center"
+                                    >
+                                      <ChevronRight className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -942,9 +1035,9 @@ export function ProductsTab({
                   {uploading
                     ? 'Uploading Photo...'
                     : saving
-                      ? 'Saving...'
+                      ? 'Updating Database...'
                       : editingId
-                        ? 'Save Changes'
+                        ? 'Update Product'
                         : 'Create Product'}
                 </button>
               </div>
