@@ -1,0 +1,147 @@
+// ============================================================
+// Decom Industries — PostgreSQL Database Schema (Prisma ORM)
+// Every `model` below becomes a real PostgreSQL table!
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PRODUCTION
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  NEW
+  REVIEWED
+  QUOTED
+  CONVERTED
+  CLOSED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  phone         String
+  businessName  String?
+  city          String?
+  passwordHash  String         // NEVER store plain-text passwords!
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  orders        Order[]
+  oemQuotes     OemQuote[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique // SHA-256 hash of refresh token
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  slug           String      @unique
+  sku            String      @unique
+  name           String
+  category       String
+  tagline        String
+  description    String
+  materialSpec   String
+  dimensions     String
+  moq            Int         @default(1)
+  priceINR       Int         // Stored as integer INR to avoid float rounding bugs
+  samplePriceINR Int
+  stock          Int         @default(100)
+  imageUrl       String
+  isFeatured     Boolean     @default(false)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  orderItems     OrderItem[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status          OrderStatus @default(PENDING)
+  subtotalINR     Int
+  gstINR          Int         // 18% GST calculated strictly on the backend
+  grandTotalINR   Int
+  shippingAddress String
+  city            String
+  phone           String
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity     Int
+  unitPriceINR Int     // Price snapshot at checkout time
+  lineTotalINR Int
+
+  @@index([orderId])
+}
+
+model OemQuote {
+  id             String      @id @default(cuid())
+  quoteNumber    String      @unique
+  userId         String?
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name           String
+  email          String
+  phone          String
+  businessName   String?
+  productType    String
+  materialMicron String
+  customSize     String
+  quantity       Int
+  logoPrinting   Boolean     @default(false)
+  notes          String?
+  status         QuoteStatus @default(NEW)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([status])
+}
