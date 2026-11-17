@@ -64,6 +64,8 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     ports:
       - "${PORT:-4000}:4000"
+    volumes:
+      - decom_uploads:/app/uploads
     networks:
       - decom-network
     healthcheck:
@@ -90,6 +92,7 @@ services:
 
 volumes:
   decom_pg_data:
+  decom_uploads:
 
 networks:
   decom-network:

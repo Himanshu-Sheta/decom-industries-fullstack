@@ -327,3 +327,41 @@ export const adminApi = {
       method: 'DELETE',
     }),
 };
+
+// ============================================================
+// 6. Media Upload API (/api/uploads/*) — ADMIN ONLY
+// ============================================================
+export const uploadApi = {
+  productImage: async (
+    file: File
+  ): Promise<{
+    success: boolean;
+    message: string;
+    filename: string;
+    sizeBytes: number;
+    imageUrl: string;
+  }> => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      throw new ApiError('Only JPEG, PNG, and WebP images are supported.', 400);
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new ApiError('Image must be 5 MB or smaller.', 400);
+    }
+
+    const res = await fetch(`${API_BASE_URL}/uploads/product-image`, {
+      method: 'POST',
+      credentials: 'include', // Sends HttpOnly ADMIN JWT cookie!
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new ApiError(data.message || 'Image upload failed.', res.status);
+    }
+    return data;
+  },
+};

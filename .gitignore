@@ -34,6 +34,12 @@ pnpm-debug.log*
 coverage/
 
 # ================================
+# Local Uploaded Product Images
+# ================================
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ================================
 # OS & Editor Files
 # ================================
 .DS_Store

@@ -32,6 +32,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/dist ./dist
 
+# Ensure uploads directory exists and is owned by non-root `node` user
+RUN mkdir -p /app/uploads/products && chown -R node:node /app/uploads
+
 # Security: run container as non-root `node` user
 USER node
 

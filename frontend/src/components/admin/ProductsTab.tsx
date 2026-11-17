@@ -13,8 +13,11 @@ import {
   Check,
   Archive,
   RotateCcw,
+  UploadCloud,
+  Loader2,
+  Image as ImageIcon,
 } from 'lucide-react';
-import { productsApi, ApiError } from '@/lib/api';
+import { productsApi, uploadApi, ApiError } from '@/lib/api';
 import type { Product } from '@/lib/types';
 import { DECOM_IMAGES, exportToCsv, formatINR } from './adminUtils';
 
@@ -59,6 +62,26 @@ export function ProductsTab({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+
+  const handleImageFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    setUploadStatus(null);
+    try {
+      const res = await uploadApi.productImage(file);
+      setForm((f) => ({ ...f, imageUrl: res.imageUrl }));
+      setUploadStatus(
+        `Uploaded ${res.filename} (${Math.round(res.sizeBytes / 1024)} KB)`
+      );
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : 'Image upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Open drawer when parent Top Bar clicks "+ New Product"
   React.useEffect(() => {
@@ -95,11 +118,13 @@ export function ProductsTab({
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setUploadStatus(null);
     setDrawerOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditingId(p.id);
+    setUploadStatus(null);
     setForm({
       name: p.name,
       slug: p.slug,
@@ -446,42 +471,129 @@ export function ProductsTab({
                 onSubmit={handleSave}
                 className="flex-1 overflow-y-auto p-6 space-y-4 text-xs"
               >
-                {/* Visual Image Picker */}
-                <div>
-                  <label className="block font-bold text-slate-700 mb-2">
-                    Select Product Photo (or enter custom URL below)
+                {/* Upload Product Photo from Computer + Live Preview */}
+                <div className="space-y-3">
+                  <label className="block font-bold text-slate-700">
+                    Product Photo (Upload from Computer or Choose Preset)
                   </label>
-                  <div className="grid grid-cols-4 gap-2 mb-2.5">
-                    {DECOM_IMAGES.map((img) => {
-                      const selected = form.imageUrl === img.url;
-                      return (
-                        <button
-                          key={img.url}
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, imageUrl: img.url }))}
-                          className={`relative rounded-xl overflow-hidden border-2 aspect-[4/3] transition-all ${
-                            selected
-                              ? 'border-amber-500 ring-2 ring-amber-500/30'
-                              : 'border-slate-200 opacity-75 hover:opacity-100'
-                          }`}
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.label}
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute inset-x-0 bottom-0 bg-slate-950/70 text-[9px] text-white px-1 py-0.5 truncate">
-                            {img.label}
+
+                  {/* Live Preview + Dropzone Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+                    {/* Live Uploaded Photo Preview */}
+                    <div className="sm:col-span-5 relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-[4/3]">
+                      {form.imageUrl ? (
+                        <img
+                          src={form.imageUrl}
+                          alt="Product preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <ImageIcon className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/75 text-white text-[10px] font-bold">
+                        Live Preview
+                      </span>
+                    </div>
+
+                    {/* Drag & Drop / File Input */}
+                    <label
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragActive(true);
+                      }}
+                      onDragLeave={() => setDragActive(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragActive(false);
+                        handleImageFile(e.dataTransfer.files?.[0]);
+                      }}
+                      className={`sm:col-span-7 rounded-2xl border-2 border-dashed p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                        dragActive
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-slate-300 bg-slate-50 hover:border-amber-500 hover:bg-amber-50/40'
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          handleImageFile(e.target.files?.[0]);
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                      />
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-6 h-6 text-amber-600 animate-spin mb-1.5" />
+                          <span className="font-bold text-slate-800">
+                            Uploading to Backend...
                           </span>
-                        </button>
-                      );
-                    })}
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-6 h-6 text-amber-600 mb-1.5" />
+                          <span className="font-bold text-slate-900">
+                            Click or drag & drop image
+                          </span>
+                          <span className="text-[10px] text-slate-500 mt-0.5">
+                            JPG, PNG, WebP • Max 5 MB • Saved via Express API
+                          </span>
+                        </>
+                      )}
+                    </label>
                   </div>
+
+                  {uploadStatus && (
+                    <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 shrink-0" />
+                      {uploadStatus}
+                    </div>
+                  )}
+
+                  {/* Quick Preset Gallery */}
+                  <div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Or pick a Decom preset photo
+                    </span>
+                    <div className="grid grid-cols-4 gap-2">
+                      {DECOM_IMAGES.map((img) => {
+                        const selected = form.imageUrl === img.url;
+                        return (
+                          <button
+                            key={img.url}
+                            type="button"
+                            onClick={() => {
+                              setForm((f) => ({ ...f, imageUrl: img.url }));
+                              setUploadStatus(null);
+                            }}
+                            className={`relative rounded-xl overflow-hidden border-2 aspect-[4/3] transition-all ${
+                              selected
+                                ? 'border-amber-500 ring-2 ring-amber-500/30'
+                                : 'border-slate-200 opacity-75 hover:opacity-100'
+                            }`}
+                          >
+                            <img
+                              src={img.url}
+                              alt={img.label}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute inset-x-0 bottom-0 bg-slate-950/70 text-[9px] text-white px-1 py-0.5 truncate">
+                              {img.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <input
                     required
                     value={form.imageUrl}
                     onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                    placeholder="/images/product-saree-organizer.jpg"
+                    placeholder="Uploaded image URL auto-fills here..."
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px]"
                   />
                 </div>
@@ -709,14 +821,16 @@ export function ProductsTab({
                 <button
                   form="product-drawer-form"
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || uploading}
                   className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-amber-600 disabled:opacity-60 text-white text-xs font-bold transition-colors"
                 >
-                  {saving
-                    ? 'Saving...'
-                    : editingId
-                      ? 'Save Changes'
-                      : 'Create Product'}
+                  {uploading
+                    ? 'Uploading Photo...'
+                    : saving
+                      ? 'Saving...'
+                      : editingId
+                        ? 'Save Changes'
+                        : 'Create Product'}
                 </button>
               </div>
             </motion.aside>

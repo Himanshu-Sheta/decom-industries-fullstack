@@ -11,6 +11,7 @@ import { productRouter } from './routes/product.routes';
 import { orderRouter } from './routes/order.routes';
 import { oemRouter } from './routes/oem.routes';
 import { adminRouter } from './routes/admin.routes';
+import { uploadRouter, UPLOADS_ROOT } from './routes/upload.routes';
 
 export const app = express();
 
@@ -18,8 +19,12 @@ export const app = express();
 // 5-Layer Security Shield (runs BEFORE every route!)
 // ============================================================
 
-// 1. Helmet: sets secure HTTP headers (XSS, Clickjacking, MIME-sniffing protection)
-app.use(helmet());
+// 1. Helmet: sets secure HTTP headers (allow cross-origin <img> loading for /uploads)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
 // 2. CORS: ONLY our Frontend URL can call this API & send HttpOnly auth cookies
 const allowedOrigins = new Set([
@@ -63,6 +68,16 @@ app.use(express.json({ limit: '100kb' }));
 // 5. Cookie parser: reads HttpOnly authentication cookies safely
 app.use(cookieParser());
 
+// Static uploaded product images (safe read-only serving with cache)
+app.use(
+  '/uploads',
+  express.static(UPLOADS_ROOT, {
+    maxAge: '7d',
+    index: false,
+    dotfiles: 'deny',
+  })
+);
+
 // ============================================================
 // Health Check Route — verifies Express + Docker PostgreSQL!
 // ============================================================
@@ -90,6 +105,7 @@ app.use('/api/products', productRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/oem-quotes', oemRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/uploads', uploadRouter);
 
 // ============================================================
 // Fallback 404 & Centralized Error Handler (must be LAST)

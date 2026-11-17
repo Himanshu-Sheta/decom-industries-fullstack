@@ -61,7 +61,7 @@ productRouter.get('/', async (req, res, next) => {
     const [products, categoriesRaw] = await Promise.all([
       prisma.product.findMany({
         where,
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'asc' }],
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
       }),
       prisma.product.findMany({
         where: { isActive: true },
