@@ -26,9 +26,14 @@ export function Footer() {
 
         <div className="space-y-2.5 text-xs">
           <h4 className="font-heading font-bold text-white uppercase tracking-wider text-[11px]">
-            Storefront & Portal
+            Quick Links
           </h4>
           <ul className="space-y-2 text-slate-400">
+            <li>
+              <Link href="/" className="hover:text-amber-400 transition-colors">
+                Home
+              </Link>
+            </li>
             <li>
               <Link href="/#products" className="hover:text-amber-400 transition-colors">
                 Product Catalog
@@ -42,11 +47,6 @@ export function Footer() {
             <li>
               <Link href="/#facility" className="hover:text-amber-400 transition-colors">
                 Surat Cleanroom Facility
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin" className="hover:text-amber-400 transition-colors">
-                Admin Portal
               </Link>
             </li>
           </ul>

@@ -170,35 +170,6 @@ export function AuthModal() {
                 >
                   {loading ? 'Verifying...' : 'Sign In'}
                 </button>
-
-                {/* Helpful Local Testing Shortcuts */}
-                <div className="pt-3 border-t border-slate-100 space-y-2">
-                  <p className="text-[11px] font-semibold text-slate-400">
-                    Local Learning Quick-Fill:
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail('himanshusheta2022@gmail.com');
-                        setPassword('Admin@1234');
-                      }}
-                      className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[11px] font-bold text-amber-900"
-                    >
-                      Fill Admin Login
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail('buyer@example.com');
-                        setPassword('Buyer@1234');
-                      }}
-                      className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
-                    >
-                      Fill Customer Login
-                    </button>
-                  </div>
-                </div>
               </form>
             ) : (
               <form onSubmit={handleRegister} className="space-y-3.5">

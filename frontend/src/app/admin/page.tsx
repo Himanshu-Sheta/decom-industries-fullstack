@@ -146,7 +146,7 @@ export default function AdminDashboardPage() {
           <p className="text-xs text-slate-600 leading-relaxed">
             {user
               ? `Signed in as ${user.email} (${user.role}). Only ADMIN accounts can access Decom Operations Console (enforced by Express requireRole('ADMIN')).`
-              : 'Sign in with your ADMIN account (himanshusheta2022@gmail.com) to manage products, orders, OEM quotes, and users.'}
+              : 'Sign in with an authorized administrator account to manage products, orders, OEM quotes, and users.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
             <button
