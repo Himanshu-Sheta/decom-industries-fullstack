@@ -12,11 +12,10 @@ import type {
 } from './types';
 
 // ============================================================
-// THE BRIDGE: How our Frontend (localhost:3000) talks to our
-// Express Backend API (localhost:4000/api)
+// THE BRIDGE: Same-origin `/api` (proxied by Next.js -> Express :4000)
+// Works seamlessly on localhost:3000 AND any worldwide HTTPS tunnel!
 // ============================================================
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export class ApiError extends Error {
   public readonly status: number;

@@ -79,9 +79,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+        NEXT_PUBLIC_API_URL: /api
     container_name: decom-frontend
     restart: unless-stopped
+    environment:
+      BACKEND_INTERNAL_URL: http://backend:4000
     depends_on:
       backend:
         condition: service_healthy

@@ -84,9 +84,8 @@ uploadRouter.post(
 
       await fs.writeFile(destination, req.body);
 
-      const protocol = req.protocol;
-      const host = req.get('host');
-      const publicUrl = `${protocol}://${host}/uploads/products/${filename}`;
+      // Relative path works everywhere: localhost:3000, Cloudflare Tunnel, Docker & production domains!
+      const publicUrl = `/uploads/products/${filename}`;
 
       res.status(201).json({
         success: true,

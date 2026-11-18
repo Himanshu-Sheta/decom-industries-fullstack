@@ -35,12 +35,28 @@ const createProductSchema = z.object({
 
 const updateProductSchema = createProductSchema.partial();
 
+function toPortableUrl(url: string): string {
+  const trimmed = url.trim();
+  // Convert any legacy http://localhost:4000/uploads/... URL to portable /uploads/...
+  return trimmed.replace(/^https?:\/\/(localhost|127\.0\.0\.1):4000(\/uploads\/.*)$/i, '$2');
+}
+
 function normalizeGallery(imageUrl: string, galleryUrls?: string[]): string[] {
-  const unique = new Set<string>([imageUrl]);
+  const unique = new Set<string>([toPortableUrl(imageUrl)]);
   for (const url of galleryUrls ?? []) {
-    if (url.trim()) unique.add(url.trim());
+    if (url.trim()) unique.add(toPortableUrl(url));
   }
   return Array.from(unique).slice(0, 12);
+}
+
+function serializeProduct<T extends { imageUrl: string; galleryUrls: string[] }>(
+  product: T
+): T {
+  return {
+    ...product,
+    imageUrl: toPortableUrl(product.imageUrl),
+    galleryUrls: (product.galleryUrls || []).map(toPortableUrl),
+  };
 }
 
 // ============================================================
@@ -88,7 +104,7 @@ productRouter.get('/', async (req, res, next) => {
       success: true,
       count: products.length,
       categories: categoriesRaw.map((c) => c.category),
-      products,
+      products: products.map(serializeProduct),
     });
   } catch (err) {
     next(err);
@@ -107,7 +123,11 @@ productRouter.get(
       const products = await prisma.product.findMany({
         orderBy: { createdAt: 'desc' },
       });
-      res.json({ success: true, count: products.length, products });
+      res.json({
+        success: true,
+        count: products.length,
+        products: products.map(serializeProduct),
+      });
     } catch (err) {
       next(err);
     }
@@ -131,7 +151,7 @@ productRouter.get('/:slugOrId', async (req, res, next) => {
       throw new AppError('Product not found.', 404);
     }
 
-    res.json({ success: true, product });
+    res.json({ success: true, product: serializeProduct(product) });
   } catch (err) {
     next(err);
   }

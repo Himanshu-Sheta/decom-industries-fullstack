@@ -15,6 +15,10 @@ import { uploadRouter, UPLOADS_ROOT } from './routes/upload.routes';
 
 export const app = express();
 
+// Trust first reverse proxy (Next.js rewrites / Cloudflare Tunnel / Docker)
+// so rate limiting & req.protocol read forwarded headers accurately
+app.set('trust proxy', 1);
+
 // ============================================================
 // 5-Layer Security Shield (runs BEFORE every route!)
 // ============================================================
@@ -37,7 +41,10 @@ const allowedOrigins = new Set([
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin)) {
+      const isTunnelOrigin =
+        env.NODE_ENV === 'development' &&
+        Boolean(origin && /^https:\/\/[a-z0-9-]+\.(trycloudflare\.com|ngrok-free\.app)$/i.test(origin));
+      if (!origin || allowedOrigins.has(origin) || isTunnelOrigin) {
         callback(null, true);
       } else {
         callback(new Error(`CORS blocked for origin: ${origin}`));
