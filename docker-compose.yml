@@ -65,7 +65,8 @@ services:
     ports:
       - "${PORT:-4000}:4000"
     volumes:
-      - decom_uploads:/app/uploads
+      # Bind mount keeps uploaded product photos synced with your local Mac & Docker!
+      - ./backend/uploads:/app/uploads
     networks:
       - decom-network
     healthcheck:
@@ -80,6 +81,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: /api
+        BACKEND_INTERNAL_URL: http://backend:4000
     container_name: decom-frontend
     restart: unless-stopped
     environment:
@@ -94,7 +96,6 @@ services:
 
 volumes:
   decom_pg_data:
-  decom_uploads:
 
 networks:
   decom-network:

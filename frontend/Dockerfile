@@ -4,9 +4,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# NEXT_PUBLIC_* vars are baked into client JS at build time
-ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api
+# Baked into Next.js client bundle & rewrite manifest at build time
+ARG NEXT_PUBLIC_API_URL=/api
+ARG BACKEND_INTERNAL_URL=http://backend:4000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV BACKEND_INTERNAL_URL=$BACKEND_INTERNAL_URL
 
 COPY package*.json ./
 RUN npm ci
