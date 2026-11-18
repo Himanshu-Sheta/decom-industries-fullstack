@@ -20,9 +20,19 @@ export function AuthModal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const resetFields = () => {
+    setEmail('');
+    setPassword('');
+    setName('');
+    setPhone('');
+    setCity('');
+    setBusinessName('');
+    setError(null);
+  };
+
   useEffect(() => {
     setTab(authModalTab);
-    setError(null);
+    resetFields();
   }, [authModalTab, isAuthModalOpen]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -95,7 +105,7 @@ export function AuthModal() {
                 type="button"
                 onClick={() => {
                   setTab('login');
-                  setError(null);
+                  resetFields();
                 }}
                 className={`py-2 rounded-xl text-xs font-bold transition-all ${
                   tab === 'login'
@@ -109,7 +119,7 @@ export function AuthModal() {
                 type="button"
                 onClick={() => {
                   setTab('register');
-                  setError(null);
+                  resetFields();
                 }}
                 className={`py-2 rounded-xl text-xs font-bold transition-all ${
                   tab === 'register'
@@ -172,7 +182,11 @@ export function AuthModal() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleRegister} className="space-y-3.5">
+              <form
+                onSubmit={handleRegister}
+                autoComplete="off"
+                className="space-y-3.5"
+              >
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Full Name *
@@ -181,6 +195,8 @@ export function AuthModal() {
                     <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       required
+                      name="signup-full-name"
+                      autoComplete="off"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your full name"
@@ -198,6 +214,8 @@ export function AuthModal() {
                     <input
                       required
                       type="email"
+                      name="signup-email"
+                      autoComplete="off"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
@@ -214,6 +232,8 @@ export function AuthModal() {
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       required
+                      name="signup-phone"
+                      autoComplete="off"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98251 12345"
@@ -232,6 +252,8 @@ export function AuthModal() {
                       required
                       minLength={8}
                       type="password"
+                      name="signup-new-password"
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Create a strong password"

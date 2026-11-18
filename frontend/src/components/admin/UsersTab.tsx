@@ -337,6 +337,7 @@ export function UsersTab({
               <form
                 id="user-drawer-form"
                 onSubmit={handleSubmit}
+                autoComplete="off"
                 className="flex-1 overflow-y-auto p-6 space-y-4 text-xs"
               >
                 <div>
@@ -345,8 +346,11 @@ export function UsersTab({
                   </label>
                   <input
                     required
+                    name="admin-new-user-name"
+                    autoComplete="off"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter full name"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200"
                   />
                 </div>
@@ -358,9 +362,12 @@ export function UsersTab({
                   <input
                     required
                     type="email"
+                    name="admin-new-user-email"
+                    autoComplete="off"
                     disabled={drawerMode === 'edit'}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="user@example.com"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 disabled:opacity-60"
                   />
                 </div>
@@ -371,6 +378,8 @@ export function UsersTab({
                   </label>
                   <input
                     required
+                    name="admin-new-user-phone"
+                    autoComplete="off"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 98251 12345"
@@ -387,9 +396,11 @@ export function UsersTab({
                       required
                       minLength={8}
                       type="password"
+                      name="admin-new-user-password"
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Hashed with bcrypt (12 rounds)"
+                      placeholder="Create a strong password"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200"
                     />
                   </div>
