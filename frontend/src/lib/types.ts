@@ -4,6 +4,8 @@ export type OrderStatus =
   | 'PENDING'
   | 'CONFIRMED'
   | 'IN_PRODUCTION'
+  | 'READY_FOR_PICKUP'
+  | 'PICKED_UP'
   | 'DISPATCHED'
   | 'DELIVERED'
   | 'CANCELLED';
@@ -75,6 +77,12 @@ export interface Order {
   city: string;
   phone: string;
   notes: string | null;
+  courierPartner?: string | null;
+  trackingNumber?: string | null;
+  pickupScheduledAt?: string | null;
+  pickedUpAt?: string | null;
+  deliveredAt?: string | null;
+  deliveryNotes?: string | null;
   createdAt: string;
   items: OrderItem[];
   user?: {

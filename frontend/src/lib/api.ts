@@ -205,12 +205,36 @@ export const ordersApi = {
       `/orders${status ? `?status=${status}` : ''}`
     ),
 
-  updateStatus: (id: string, status: OrderStatus) =>
+  updateStatus: (
+    id: string,
+    status: OrderStatus,
+    extra?: { courierPartner?: string; trackingNumber?: string; deliveryNotes?: string }
+  ) =>
     apiRequest<{ success: boolean; message: string; order: Order }>(
       `/orders/${id}/status`,
       {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...extra }),
+      }
+    ),
+
+  updateDelivery: (
+    id: string,
+    payload: {
+      status?: OrderStatus;
+      courierPartner?: string;
+      trackingNumber?: string;
+      deliveryNotes?: string;
+      pickupScheduledAt?: string | null;
+      pickedUpAt?: string | null;
+      deliveredAt?: string | null;
+    }
+  ) =>
+    apiRequest<{ success: boolean; message: string; order: Order }>(
+      `/orders/${id}/delivery`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
       }
     ),
 };

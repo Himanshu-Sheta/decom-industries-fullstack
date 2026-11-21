@@ -11,6 +11,11 @@ import {
   ShieldCheck,
   FileText,
   CheckCircle2,
+  Truck,
+  MapPin,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ordersApi, oemApi } from '@/lib/api';
@@ -29,6 +34,7 @@ export function AccountModal() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<OemQuote[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -231,7 +237,7 @@ export function AccountModal() {
               )}
 
               {tab === 'orders' && (
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {loadingData ? (
                     <p className="text-xs text-slate-500 py-8 text-center">
                       Loading your orders...
@@ -241,30 +247,245 @@ export function AccountModal() {
                       You have not placed any orders yet.
                     </p>
                   ) : (
-                    orders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-xs font-bold text-slate-900">
-                            {order.orderNumber}
-                          </span>
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-                            {order.status}
-                          </span>
+                    orders.map((order) => {
+                      const isExpanded = expandedOrderId === order.id;
+                      const stepIndex =
+                        order.status === 'PENDING'
+                          ? 1
+                          : order.status === 'CONFIRMED' || order.status === 'IN_PRODUCTION'
+                          ? 2
+                          : order.status === 'READY_FOR_PICKUP'
+                          ? 3
+                          : order.status === 'PICKED_UP'
+                          ? 4
+                          : order.status === 'DISPATCHED'
+                          ? 5
+                          : order.status === 'DELIVERED'
+                          ? 6
+                          : 0;
+
+                      const statusBadge =
+                        order.status === 'READY_FOR_PICKUP'
+                          ? 'bg-purple-100 text-purple-800 border-purple-200'
+                          : order.status === 'PICKED_UP'
+                          ? 'bg-blue-100 text-blue-800 border-blue-200'
+                          : order.status === 'DISPATCHED'
+                          ? 'bg-teal-100 text-teal-800 border-teal-200'
+                          : order.status === 'DELIVERED'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                          : order.status === 'CONFIRMED'
+                          ? 'bg-sky-100 text-sky-800 border-sky-200'
+                          : order.status === 'CANCELLED'
+                          ? 'bg-rose-100 text-rose-800 border-rose-200'
+                          : 'bg-amber-100 text-amber-800 border-amber-200';
+
+                      const statusText =
+                        order.status === 'READY_FOR_PICKUP'
+                          ? 'Ready for Courier Pickup (Surat)'
+                          : order.status === 'PICKED_UP'
+                          ? 'Picked Up by Courier'
+                          : order.status === 'DISPATCHED'
+                          ? 'In Transit'
+                          : order.status === 'DELIVERED'
+                          ? 'Delivered'
+                          : order.status === 'CONFIRMED'
+                          ? 'Confirmed & Packed'
+                          : order.status === 'CANCELLED'
+                          ? 'Cancelled'
+                          : 'Order Placed';
+
+                      return (
+                        <div
+                          key={order.id}
+                          className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 transition-all"
+                        >
+                          {/* Order Header */}
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-bold text-slate-900">
+                              {order.orderNumber}
+                            </span>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${statusBadge}`}
+                            >
+                              {statusText}
+                            </span>
+                          </div>
+
+                          {/* Items Summary */}
+                          <div className="text-[11px] text-slate-600">
+                            {order.items
+                              .map((i) => `${i.quantity}× ${i.product.name}`)
+                              .join(', ')}
+                          </div>
+
+                          {/* Price & Date */}
+                          <div className="flex justify-between items-center text-xs font-bold text-slate-900 pt-1 border-t border-slate-200/70">
+                            <span className="text-[11px] font-normal text-slate-500">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span>₹{order.grandTotalINR.toLocaleString('en-IN')}</span>
+                              <button
+                                onClick={() =>
+                                  setExpandedOrderId(isExpanded ? null : order.id)
+                                }
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-[11px] font-bold text-slate-800 transition-colors shadow-2xs"
+                              >
+                                <Truck className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Track</span>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Interactive Delivery Tracking Drawer */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden pt-2.5 border-t border-slate-200/80 space-y-3"
+                              >
+                                {/* Milestone Stepper */}
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    <span>Surat Warehouse</span>
+                                    <span>Third-Party Courier</span>
+                                    <span>Delivery</span>
+                                  </div>
+
+                                  <div className="relative flex items-center justify-between">
+                                    {/* Track Bar */}
+                                    <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-slate-200 rounded-full z-0" />
+                                    <div
+                                      className="absolute top-1/2 left-0 -translate-y-1/2 h-1 bg-amber-500 rounded-full z-0 transition-all duration-500"
+                                      style={{
+                                        width: `${Math.min(
+                                          100,
+                                          Math.max(0, ((stepIndex - 1) / 4) * 100)
+                                        )}%`,
+                                      }}
+                                    />
+
+                                    {/* Step 1: Placed */}
+                                    <div
+                                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                        stepIndex >= 1
+                                          ? 'bg-amber-500 text-white shadow-xs'
+                                          : 'bg-slate-200 text-slate-500'
+                                      }`}
+                                    >
+                                      ✓
+                                    </div>
+
+                                    {/* Step 2: Packed */}
+                                    <div
+                                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                        stepIndex >= 2
+                                          ? 'bg-amber-500 text-white shadow-xs'
+                                          : 'bg-slate-200 text-slate-500'
+                                      }`}
+                                    >
+                                      {stepIndex >= 2 ? '✓' : '2'}
+                                    </div>
+
+                                    {/* Step 3: Ready for Pickup */}
+                                    <div
+                                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                        stepIndex >= 3
+                                          ? 'bg-purple-600 text-white shadow-xs'
+                                          : 'bg-slate-200 text-slate-500'
+                                      }`}
+                                    >
+                                      {stepIndex >= 3 ? '✓' : '3'}
+                                    </div>
+
+                                    {/* Step 4: Picked Up / In Transit */}
+                                    <div
+                                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                        stepIndex >= 4
+                                          ? 'bg-blue-600 text-white shadow-xs'
+                                          : 'bg-slate-200 text-slate-500'
+                                      }`}
+                                    >
+                                      {stepIndex >= 4 ? '✓' : '4'}
+                                    </div>
+
+                                    {/* Step 5: Delivered */}
+                                    <div
+                                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                        stepIndex >= 6
+                                          ? 'bg-emerald-600 text-white shadow-xs'
+                                          : 'bg-slate-200 text-slate-500'
+                                      }`}
+                                    >
+                                      {stepIndex >= 6 ? '✓' : '5'}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex justify-between text-[9px] text-slate-400 font-semibold px-0.5">
+                                    <span>Placed</span>
+                                    <span>Packed</span>
+                                    <span>Pickup Ready</span>
+                                    <span>Picked Up</span>
+                                    <span>Delivered</span>
+                                  </div>
+                                </div>
+
+                                {/* Active Status Narrative */}
+                                <div className="p-3 rounded-xl bg-white border border-slate-200/90 text-xs space-y-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                    <span className="font-bold text-slate-900">
+                                      {order.status === 'PENDING' &&
+                                        'Order Received • Surat Dispatch Team Preparing'}
+                                      {order.status === 'CONFIRMED' &&
+                                        'Verified & Packed at Surat Warehouse'}
+                                      {order.status === 'READY_FOR_PICKUP' &&
+                                        'Ready for Courier Pickup at Surat Facility'}
+                                      {order.status === 'PICKED_UP' &&
+                                        'Courier Has Picked Up Parcel from Surat Location'}
+                                      {order.status === 'DISPATCHED' &&
+                                        'Out for Delivery / In Transit'}
+                                      {order.status === 'DELIVERED' &&
+                                        'Package Delivered Successfully'}
+                                      {order.status === 'CANCELLED' && 'Order Cancelled'}
+                                    </span>
+                                  </div>
+
+                                  {/* Courier & Tracking Details */}
+                                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-[11px]">
+                                    <div>
+                                      <span className="text-slate-400">Courier Partner:</span>{' '}
+                                      <span className="font-semibold text-slate-800">
+                                        {order.courierPartner || 'Assigned on Pickup'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400">AWB / Docket #:</span>{' '}
+                                      <span className="font-mono font-semibold text-slate-800">
+                                        {order.trackingNumber || 'Pending Pickup'}
+                                      </span>
+                                    </div>
+                                    <div className="col-span-2 flex items-start gap-1 text-slate-500 text-[10px]">
+                                      <MapPin className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                                      <span>
+                                        Delivering to: {order.shippingAddress}, {order.city}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        <div className="text-[11px] text-slate-600">
-                          {order.items
-                            .map((i) => `${i.quantity}× ${i.product.name}`)
-                            .join(', ')}
-                        </div>
-                        <div className="flex justify-between text-xs font-bold text-slate-900 pt-1 border-t border-slate-200/70">
-                          <span>{new Date(order.createdAt).toLocaleDateString()}</span>
-                          <span>₹{order.grandTotalINR.toLocaleString('en-IN')}</span>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}

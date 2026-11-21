@@ -41,10 +41,12 @@ const allowedOrigins = new Set([
 app.use(
   cors({
     origin: (origin, callback) => {
-      const isTunnelOrigin =
-        env.NODE_ENV === 'development' &&
-        Boolean(origin && /^https:\/\/[a-z0-9-]+\.(trycloudflare\.com|ngrok-free\.app)$/i.test(origin));
-      if (!origin || allowedOrigins.has(origin) || isTunnelOrigin) {
+      // In development, allow localhost, custom tunnels, and public preview links
+      if (
+        !origin ||
+        env.NODE_ENV === 'development' ||
+        allowedOrigins.has(origin)
+      ) {
         callback(null, true);
       } else {
         callback(new Error(`CORS blocked for origin: ${origin}`));

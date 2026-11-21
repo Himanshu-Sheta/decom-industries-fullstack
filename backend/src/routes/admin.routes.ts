@@ -100,6 +100,8 @@ adminRouter.get('/stats', async (_req, res, next) => {
       PENDING: 0,
       CONFIRMED: 0,
       IN_PRODUCTION: 0,
+      READY_FOR_PICKUP: 0,
+      PICKED_UP: 0,
       DISPATCHED: 0,
       DELIVERED: 0,
       CANCELLED: 0,

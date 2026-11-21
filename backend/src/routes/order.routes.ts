@@ -25,6 +25,19 @@ const createOrderSchema = z.object({
 
 const updateStatusSchema = z.object({
   status: z.nativeEnum(OrderStatus),
+  courierPartner: z.string().trim().max(100).optional(),
+  trackingNumber: z.string().trim().max(100).optional(),
+  deliveryNotes: z.string().trim().max(500).optional(),
+});
+
+const updateDeliverySchema = z.object({
+  status: z.nativeEnum(OrderStatus).optional(),
+  courierPartner: z.string().trim().max(100).optional(),
+  trackingNumber: z.string().trim().max(100).optional(),
+  deliveryNotes: z.string().trim().max(500).optional(),
+  pickupScheduledAt: z.string().datetime().optional().nullable(),
+  pickedUpAt: z.string().datetime().optional().nullable(),
+  deliveredAt: z.string().datetime().optional().nullable(),
 });
 
 function generateOrderNumber(): string {
@@ -199,24 +212,116 @@ orderRouter.patch(
   async (req, res, next) => {
     try {
       const id = String(req.params.id);
-      const { status } = updateStatusSchema.parse(req.body);
+      const { status, courierPartner, trackingNumber, deliveryNotes } =
+        updateStatusSchema.parse(req.body);
 
       const existing = await prisma.order.findUnique({
         where: { id },
-        select: { id: true },
       });
       if (!existing) {
         throw new AppError('Order not found.', 404);
       }
 
+      const updateData: Record<string, unknown> = { status };
+      if (courierPartner !== undefined) updateData.courierPartner = courierPartner;
+      if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber;
+      if (deliveryNotes !== undefined) updateData.deliveryNotes = deliveryNotes;
+
+      if (status === 'READY_FOR_PICKUP' && !existing.pickupScheduledAt) {
+        updateData.pickupScheduledAt = new Date();
+      } else if (status === 'PICKED_UP' && !existing.pickedUpAt) {
+        updateData.pickedUpAt = new Date();
+      } else if (status === 'DELIVERED' && !existing.deliveredAt) {
+        updateData.deliveredAt = new Date();
+      }
+
       const order = await prisma.order.update({
         where: { id },
-        data: { status },
+        data: updateData,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, phone: true, businessName: true },
+          },
+          items: {
+            include: {
+              product: { select: { id: true, name: true, sku: true, imageUrl: true } },
+            },
+          },
+        },
       });
 
       res.json({
         success: true,
         message: `Order status updated to ${status}.`,
+        order,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ============================================================
+// PATCH /api/orders/:id/delivery — Update courier / pickup details (ADMIN ONLY)
+// ============================================================
+orderRouter.patch(
+  '/:id/delivery',
+  requireAuth,
+  requireRole('ADMIN'),
+  async (req, res, next) => {
+    try {
+      const id = String(req.params.id);
+      const data = updateDeliverySchema.parse(req.body);
+
+      const existing = await prisma.order.findUnique({
+        where: { id },
+      });
+      if (!existing) {
+        throw new AppError('Order not found.', 404);
+      }
+
+      const updateData: Record<string, unknown> = {};
+      if (data.status) updateData.status = data.status;
+      if (data.courierPartner !== undefined) updateData.courierPartner = data.courierPartner;
+      if (data.trackingNumber !== undefined) updateData.trackingNumber = data.trackingNumber;
+      if (data.deliveryNotes !== undefined) updateData.deliveryNotes = data.deliveryNotes;
+      if (data.pickupScheduledAt !== undefined) {
+        updateData.pickupScheduledAt = data.pickupScheduledAt ? new Date(data.pickupScheduledAt) : null;
+      }
+      if (data.pickedUpAt !== undefined) {
+        updateData.pickedUpAt = data.pickedUpAt ? new Date(data.pickedUpAt) : null;
+      }
+      if (data.deliveredAt !== undefined) {
+        updateData.deliveredAt = data.deliveredAt ? new Date(data.deliveredAt) : null;
+      }
+
+      // Auto-set timestamps if status changes
+      if (data.status === 'READY_FOR_PICKUP' && !existing.pickupScheduledAt && !updateData.pickupScheduledAt) {
+        updateData.pickupScheduledAt = new Date();
+      } else if (data.status === 'PICKED_UP' && !existing.pickedUpAt && !updateData.pickedUpAt) {
+        updateData.pickedUpAt = new Date();
+      } else if (data.status === 'DELIVERED' && !existing.deliveredAt && !updateData.deliveredAt) {
+        updateData.deliveredAt = new Date();
+      }
+
+      const order = await prisma.order.update({
+        where: { id },
+        data: updateData,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, phone: true, businessName: true },
+          },
+          items: {
+            include: {
+              product: { select: { id: true, name: true, sku: true, imageUrl: true } },
+            },
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        message: 'Delivery details updated successfully.',
         order,
       });
     } catch (err) {
