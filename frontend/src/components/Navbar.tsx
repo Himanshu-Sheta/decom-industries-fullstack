@@ -27,31 +27,6 @@ export function Navbar() {
 
   return (
     <div className="sticky top-0 z-40 w-full">
-      {/* Top Trust Bar */}
-      <div className="bg-slate-950 text-slate-200 text-xs py-2 px-3 sm:px-4 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-[11px] sm:text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="truncate">
-              Surat Manufacturing Facility •{' '}
-              <strong className="text-white font-semibold">Direct Factory Supply</strong>
-            </span>
-          </div>
-          <div className="hidden sm:flex items-center gap-4 text-slate-300 text-xs">
-            <span>100% Virgin Polymer • Pan-India Dispatch</span>
-            {user?.role === 'ADMIN' && (
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-semibold"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Admin Console
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Main Sticky Header */}
       <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
