@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Images,
+  Eye,
 } from 'lucide-react';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/lib/types';
@@ -234,36 +235,48 @@ export function ProductCatalog() {
                   delay: Math.min(index * 0.045, 0.28),
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="group rounded-3xl bg-white border border-slate-200/80 shadow-card hover:shadow-soft hover:-translate-y-1.5 overflow-hidden flex flex-col transition-[transform,box-shadow] duration-300 ease-out will-change-transform"
+                className="group rounded-3xl bg-white border border-slate-200/80 shadow-card sm:hover:shadow-soft sm:hover:-translate-y-1.5 overflow-hidden flex flex-col transition-[box-shadow,transform] duration-300 ease-out"
               >
                 {/* Interactive Multi-Photo Product Image */}
-                <div
-                  onClick={() => openQuickView(product)}
-                  className="relative aspect-[4/3] overflow-hidden bg-slate-100 cursor-pointer"
-                >
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 select-none">
                   <img
+                    loading="lazy"
+                    decoding="async"
                     src={currentPhoto}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover transition-transform duration-300 sm:group-hover:scale-105"
                   />
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur text-[10px] font-bold uppercase tracking-wide text-amber-700 shadow-sm">
+                  <div className="absolute top-3 left-3 flex gap-1.5 z-10 pointer-events-none">
+                    <span className="px-2.5 py-1 rounded-full bg-white/95 text-[10px] font-bold uppercase tracking-wide text-amber-700 shadow-xs">
                       {product.category}
                     </span>
                   </div>
 
                   {photos.length > 1 && (
-                    <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/75 backdrop-blur text-white text-[10px] font-bold">
+                    <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/80 text-white text-[10px] font-bold z-10 pointer-events-none">
                       <Images className="w-3 h-3" />
                       {activePhotoIdx + 1}/{photos.length}
                     </span>
                   )}
 
                   {product.stock <= 25 && (
-                    <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                    <span className="absolute top-3 right-3 px-2 py-1 rounded-full bg-rose-600 text-white text-[10px] font-bold z-10 pointer-events-none">
                       {outOfStock ? 'Out of stock' : `Only ${product.stock} left`}
                     </span>
                   )}
+
+                  {/* Desktop Quick View Overlay Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openQuickView(product);
+                    }}
+                    className="absolute inset-x-4 bottom-3.5 py-2 rounded-xl bg-white/95 hover:bg-white text-slate-900 text-xs font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex items-center justify-center gap-1.5 z-20"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Quick View</span>
+                  </button>
 
                   {/* Card Prev / Next Photo Chevrons + Dots */}
                   {photos.length > 1 && (
@@ -272,7 +285,7 @@ export function ProductCatalog() {
                         type="button"
                         aria-label="Previous photo"
                         onClick={(e) => stepCardPhoto(e, product.id, photos.length, -1)}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-sm flex items-center justify-center touch-manipulation z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
@@ -280,11 +293,11 @@ export function ProductCatalog() {
                         type="button"
                         aria-label="Next photo"
                         onClick={(e) => stepCardPhoto(e, product.id, photos.length, 1)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-sm flex items-center justify-center touch-manipulation z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
-                      <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1 z-20">
                         {photos.map((_, dotIdx) => (
                           <button
                             key={dotIdx}
@@ -297,10 +310,10 @@ export function ProductCatalog() {
                                 [product.id]: dotIdx,
                               }));
                             }}
-                            className={`h-1.5 rounded-full transition-all ${
+                            className={`h-1.5 rounded-full transition-all touch-manipulation ${
                               dotIdx === activePhotoIdx
                                 ? 'w-4 bg-amber-400'
-                                : 'w-1.5 bg-white/75 hover:bg-white'
+                                : 'w-1.5 bg-white/80 hover:bg-white'
                             }`}
                           />
                         ))}
@@ -309,20 +322,29 @@ export function ProductCatalog() {
                   )}
                 </div>
 
-                  {/* Card Body */}
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="text-[11px] font-mono text-slate-400 mb-1">
+                {/* Card Body */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[11px] font-mono text-slate-400">
                       {product.sku}
-                    </div>
-                    <h3
+                    </span>
+                    <button
+                      type="button"
                       onClick={() => openQuickView(product)}
-                      className="font-heading font-bold text-slate-950 text-base leading-snug cursor-pointer hover:text-amber-700 transition-colors"
+                      className="sm:hidden inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 hover:text-amber-700"
                     >
-                      {product.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">
-                      {product.tagline}
-                    </p>
+                      <Eye className="w-3.5 h-3.5" /> View Details
+                    </button>
+                  </div>
+                  <h3
+                    onClick={() => openQuickView(product)}
+                    className="font-heading font-bold text-slate-950 text-base leading-snug cursor-pointer hover:text-amber-700 transition-colors"
+                  >
+                    {product.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">
+                    {product.tagline}
+                  </p>
 
                     {/* Spec Pill Box */}
                     <div className="mt-3.5 p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 text-[11px]">
@@ -369,7 +391,7 @@ export function ProductCatalog() {
                               type="button"
                               aria-label="Decrease quantity"
                               onClick={() => setCardQty(product, qty - 1)}
-                              className="w-7 h-7 rounded-lg hover:bg-white text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
+                              className="w-8 h-8 rounded-lg hover:bg-white active:bg-slate-200 text-slate-700 hover:text-slate-950 flex items-center justify-center transition-colors touch-manipulation"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -388,7 +410,7 @@ export function ProductCatalog() {
                               type="button"
                               aria-label="Increase quantity"
                               onClick={() => setCardQty(product, qty + 1)}
-                              className="w-7 h-7 rounded-lg hover:bg-white text-slate-600 hover:text-slate-950 flex items-center justify-center transition-colors"
+                              className="w-8 h-8 rounded-lg hover:bg-white active:bg-slate-200 text-slate-700 hover:text-slate-950 flex items-center justify-center transition-colors touch-manipulation"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
@@ -401,7 +423,7 @@ export function ProductCatalog() {
                         <button
                           disabled={outOfStock}
                           onClick={() => handleCardAdd(product)}
-                          className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold active:scale-[0.97] transition-[transform,background-color] duration-200 ${
+                          className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold active:scale-[0.97] transition-[transform,background-color] duration-200 touch-manipulation ${
                             addedId === product.id
                               ? 'bg-emerald-600 text-white'
                               : outOfStock
@@ -423,7 +445,7 @@ export function ProductCatalog() {
                         <button
                           disabled={outOfStock}
                           onClick={() => handleCardBuyNow(product)}
-                          className={`inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl text-xs font-bold active:scale-[0.97] transition-[transform,background-color] duration-200 ${
+                          className={`inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl text-xs font-bold active:scale-[0.97] transition-[transform,background-color] duration-200 touch-manipulation ${
                             outOfStock
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                               : 'bg-amber-500 hover:bg-amber-600 text-white'
@@ -465,20 +487,23 @@ export function ProductCatalog() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedProduct(null)}
-            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-950/75 flex items-center justify-center p-3 sm:p-4 overscroll-contain"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2"
+              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 max-h-[88vh] max-h-[88dvh] flex flex-col md:grid md:grid-cols-2 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
             >
               <button
+                type="button"
+                aria-label="Close modal"
                 onClick={() => setSelectedProduct(null)}
-                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-slate-100 text-slate-600"
+                className="sticky md:absolute top-3 right-3 self-end z-30 p-2.5 rounded-full bg-white/95 border border-slate-200 text-slate-800 shadow-md active:bg-slate-200 touch-manipulation cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
 
               <div className="bg-slate-50 p-4 flex flex-col justify-between gap-3">
@@ -494,6 +519,8 @@ export function ProductCatalog() {
                             key={activeUrl}
                             src={activeUrl}
                             alt={`${selectedProduct.name} — view ${safeIdx + 1}`}
+                            loading="lazy"
+                            decoding="async"
                             initial={{ opacity: 0.25 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0.25 }}
@@ -548,6 +575,8 @@ export function ProductCatalog() {
                               }`}
                             >
                               <img
+                                loading="lazy"
+                                decoding="async"
                                 src={url}
                                 alt={`Thumbnail ${idx + 1}`}
                                 className="w-full h-full object-cover"
@@ -605,7 +634,7 @@ export function ProductCatalog() {
                         <button
                           type="button"
                           onClick={() => setModalQty((q) => Math.max(1, q - 1))}
-                          className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+                          className="w-8 h-8 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center justify-center touch-manipulation"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -627,7 +656,7 @@ export function ProductCatalog() {
                           onClick={() =>
                             setModalQty((q) => Math.min(selectedProduct.stock, q + 1))
                           }
-                          className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+                          className="w-8 h-8 rounded-lg hover:bg-slate-100 active:bg-slate-200 flex items-center justify-center touch-manipulation"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -641,7 +670,7 @@ export function ProductCatalog() {
                             key={preset}
                             type="button"
                             onClick={() => setModalQty(preset)}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors touch-manipulation active:scale-95 ${
                               modalQty === preset
                                 ? 'bg-slate-950 text-white'
                                 : 'bg-white border border-slate-200 text-slate-600 hover:border-amber-500'
@@ -669,7 +698,7 @@ export function ProductCatalog() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 pb-1">
                     <button
                       disabled={selectedProduct.stock === 0}
                       onClick={() => {
@@ -677,7 +706,7 @@ export function ProductCatalog() {
                         setCardQty(selectedProduct, modalQty);
                         setSelectedProduct(null);
                       }}
-                      className="py-3 rounded-xl bg-slate-950 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold transition-colors"
+                      className="py-3 px-2 rounded-xl bg-slate-950 hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50 text-white text-xs font-bold transition-all touch-manipulation"
                     >
                       Add {modalQty} to Cart
                     </button>
@@ -689,7 +718,7 @@ export function ProductCatalog() {
                         setSelectedProduct(null);
                         openCart();
                       }}
-                      className="py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold transition-colors"
+                      className="py-3 px-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] disabled:opacity-50 text-white text-xs font-bold transition-all touch-manipulation"
                     >
                       Buy Now & Checkout
                     </button>

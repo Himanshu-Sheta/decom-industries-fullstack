@@ -96,7 +96,7 @@ export function CartDrawer() {
               setPlacedOrder(null);
               closeCart();
             }}
-            className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-slate-950/70"
           />
 
           <motion.aside
@@ -104,7 +104,7 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.85 }}
-            className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl border-l border-slate-200 flex flex-col will-change-transform"
+            className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl border-l border-slate-200 flex flex-col"
           >
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -223,6 +223,8 @@ export function CartDrawer() {
                         <img
                           src={product.imageUrl}
                           alt={product.name}
+                          loading="lazy"
+                          decoding="async"
                           className="w-16 h-16 rounded-xl object-cover shrink-0 border border-slate-200"
                         />
                         <div className="flex-1 min-w-0">

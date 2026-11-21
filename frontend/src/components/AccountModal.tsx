@@ -83,14 +83,14 @@ export function AccountModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={closeAccountModal}
-          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/75 flex items-center justify-center p-4 overscroll-contain"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[88vh] flex flex-col"
+            className="relative w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[88vh] max-h-[88dvh] flex flex-col overscroll-contain [-webkit-overflow-scrolling:touch]"
           >
             <button
               onClick={closeAccountModal}

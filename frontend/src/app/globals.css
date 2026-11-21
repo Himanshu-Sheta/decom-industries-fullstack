@@ -12,6 +12,11 @@
     @apply bg-[#FAF9F6] text-slate-900 antialiased selection:bg-amber-200 selection:text-slate-950;
     overflow-x: hidden;
   }
+
+  /* Eliminate 300ms double-tap delay on iOS Safari & mobile touch devices */
+  button, input, select, textarea, a {
+    touch-action: manipulation;
+  }
 }
 
 /* Custom Animation Keyframes for Smooth 60-120fps UI */

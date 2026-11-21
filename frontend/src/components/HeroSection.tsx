@@ -48,9 +48,8 @@ export function HeroSection() {
       ref={heroRef}
       className="relative overflow-hidden border-b border-slate-200/70 bg-gradient-to-b from-white via-[#FAF9F6] to-[#F5F2EA] min-h-[82vh] flex items-center"
     >
-      {/* Ambient Moving Glow Spheres in Background */}
-      <div className="absolute top-10 left-1/4 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-amber-200/35 blur-3xl pointer-events-none animate-drift -z-10" />
-      <div className="absolute bottom-10 right-10 w-80 sm:w-[28rem] h-80 sm:h-[28rem] rounded-full bg-orange-100/40 blur-3xl pointer-events-none -z-10" />
+      {/* Lightweight Ambient Radial Gradient (Zero GPU Overhead on Mobile) */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-100/50 via-transparent to-transparent pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
