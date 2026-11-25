@@ -75,7 +75,7 @@ export function OemStudio() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="lg:col-span-5 space-y-5 will-change-transform"
+            className="lg:col-span-5 space-y-5"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
               <Sliders className="w-3.5 h-3.5 text-amber-600" />
