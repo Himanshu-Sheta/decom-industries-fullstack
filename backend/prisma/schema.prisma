@@ -21,6 +21,8 @@ enum OrderStatus {
   PENDING
   CONFIRMED
   IN_PRODUCTION
+  READY_FOR_PICKUP
+  PICKED_UP
   DISPATCHED
   DELIVERED
   CANCELLED
@@ -78,6 +80,7 @@ model Product {
   samplePriceINR Int
   stock          Int         @default(100)
   imageUrl       String
+  galleryUrls    String[]    @default([])
   isFeatured     Boolean     @default(false)
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())
@@ -102,6 +105,12 @@ model Order {
   city            String
   phone           String
   notes           String?
+  courierPartner     String?
+  trackingNumber     String?
+  pickupScheduledAt  DateTime?
+  pickedUpAt         DateTime?
+  deliveredAt        DateTime?
+  deliveryNotes      String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 

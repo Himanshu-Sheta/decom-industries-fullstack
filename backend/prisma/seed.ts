@@ -23,6 +23,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 199,
     stock: 420,
     imageUrl: '/images/product-saree-organizer.jpg',
+    galleryUrls: [
+      '/images/product-saree-organizer.jpg',
+      '/images/saree-angle-front.jpg',
+      '/images/saree-angle-inside.jpg',
+      '/images/saree-angle-detail.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -40,6 +46,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 420,
     stock: 260,
     imageUrl: '/images/product-closet-storage.jpg',
+    galleryUrls: [
+      '/images/product-closet-storage.jpg',
+      '/images/closet-angle-front.jpg',
+      '/images/closet-angle-inside.jpg',
+      '/images/closet-angle-detail.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -57,6 +69,12 @@ const SEED_PRODUCTS = [
     samplePriceINR: 590,
     stock: 180,
     imageUrl: '/images/product-jewelry-kit.jpg',
+    galleryUrls: [
+      '/images/product-jewelry-kit.jpg',
+      '/images/jewelry-angle-front.jpg',
+      '/images/jewelry-angle-pockets.jpg',
+      '/images/jewelry-angle-detail.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -73,7 +91,13 @@ const SEED_PRODUCTS = [
     priceINR: 499,
     samplePriceINR: 549,
     stock: 520,
-    imageUrl: '/images/product-saree-organizer.jpg',
+    imageUrl: '/images/decom-transparent-storage-bag-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-transparent-storage-bag-angle-1.jpg',
+      '/images/decom-transparent-storage-bag-angle-2.jpg',
+      '/images/decom-transparent-storage-bag-angle-3.jpg',
+      '/images/decom-transparent-storage-bag-angle-4.jpg',
+    ],
     isFeatured: false,
   },
   {
@@ -90,7 +114,13 @@ const SEED_PRODUCTS = [
     priceINR: 290,
     samplePriceINR: 350,
     stock: 195,
-    imageUrl: '/images/product-closet-storage.jpg',
+    imageUrl: '/images/decom-handbag-purse-organizer-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-handbag-purse-organizer-angle-1.jpg',
+      '/images/decom-handbag-purse-organizer-angle-2.jpg',
+      '/images/decom-handbag-purse-organizer-angle-3.jpg',
+      '/images/decom-handbag-purse-organizer-angle-4.jpg',
+    ],
     isFeatured: false,
   },
   {
@@ -107,7 +137,13 @@ const SEED_PRODUCTS = [
     priceINR: 380,
     samplePriceINR: 450,
     stock: 310,
-    imageUrl: '/images/product-closet-storage.jpg',
+    imageUrl: '/images/decom-blanket-bedsheet-storage-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-blanket-bedsheet-storage-angle-1.jpg',
+      '/images/decom-blanket-bedsheet-storage-angle-2.jpg',
+      '/images/decom-blanket-bedsheet-storage-angle-3.jpg',
+      '/images/decom-blanket-bedsheet-storage-angle-4.jpg',
+    ],
     isFeatured: true,
   },
   {
@@ -124,7 +160,13 @@ const SEED_PRODUCTS = [
     priceINR: 185,
     samplePriceINR: 240,
     stock: 340,
-    imageUrl: '/images/product-jewelry-kit.jpg',
+    imageUrl: '/images/decom-transparent-vanity-pouch-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-transparent-vanity-pouch-angle-1.jpg',
+      '/images/decom-transparent-vanity-pouch-angle-2.jpg',
+      '/images/decom-transparent-vanity-pouch-angle-3.jpg',
+      '/images/decom-transparent-vanity-pouch-angle-4.jpg',
+    ],
     isFeatured: false,
   },
   {
@@ -134,14 +176,20 @@ const SEED_PRODUCTS = [
     category: 'Value Combos',
     tagline: 'Curated wedding packing bundle: 8 Saree Covers, 2 Closet Cubes, 2 Jewelry Kits.',
     description:
-      'Our flagship wedding and boutique gift set manufactured at our Surat cleanroom facility. Color-matched champagne gold accents across every piece.',
+      'Our flagship wedding and boutique gift set manufactured at our Surat production facility. Color-matched champagne gold accents across every piece.',
     materialSpec: 'Mixed Virgin PVC & 100 GSM Non-Woven Suite',
     dimensions: 'Assorted 12-Piece Master Pack',
     moq: 1,
     priceINR: 2499,
     samplePriceINR: 2499,
     stock: 65,
-    imageUrl: '/images/product-saree-organizer.jpg',
+    imageUrl: '/images/decom-combo-storage-set-angle-1.jpg',
+    galleryUrls: [
+      '/images/decom-combo-storage-set-angle-1.jpg',
+      '/images/decom-combo-storage-set-angle-2.jpg',
+      '/images/decom-combo-storage-set-angle-3.jpg',
+      '/images/decom-combo-storage-set-angle-4.jpg',
+    ],
     isFeatured: true,
   },
 ];
@@ -149,21 +197,21 @@ const SEED_PRODUCTS = [
 async function main() {
   console.log('🌱 Seeding Decom Industries PostgreSQL database...');
 
-  // 1. Seed Primary Admin Account (Himanshu Sheta)
+  // 1. Seed Primary Demo Admin Account
   const adminPasswordHash = await bcrypt.hash('Admin@1234', 12);
   const himanshuAdmin = await prisma.user.upsert({
-    where: { email: 'himanshusheta2022@gmail.com' },
+    where: { email: 'demo.admin@example.com' },
     update: {
-      name: 'Himanshu Sheta',
-      phone: '+91 9429279768',
+      name: 'Demo Admin',
+      phone: '+91 90000 00000',
       businessName: 'Decom Industries',
       city: 'Surat, Gujarat',
       role: 'ADMIN',
     },
     create: {
-      name: 'Himanshu Sheta',
-      email: 'himanshusheta2022@gmail.com',
-      phone: '+91 9429279768',
+      name: 'Demo Admin',
+      email: 'demo.admin@example.com',
+      phone: '+91 90000 00000',
       businessName: 'Decom Industries',
       city: 'Surat, Gujarat',
       passwordHash: adminPasswordHash,
@@ -202,11 +250,14 @@ async function main() {
     },
   });
 
-  // 3. Seed 8 Decom Industries Products
+  // 3. Seed 8 Decom Industries Products (with multi-angle galleries)
   for (const product of SEED_PRODUCTS) {
     await prisma.product.upsert({
       where: { slug: product.slug },
-      update: {},
+      update: {
+        imageUrl: product.imageUrl,
+        galleryUrls: product.galleryUrls,
+      },
       create: product,
     });
   }

@@ -24,11 +24,40 @@ const createProductSchema = z.object({
   samplePriceINR: z.coerce.number().int().min(1),
   stock: z.coerce.number().int().min(0).default(100),
   imageUrl: z.string().trim().min(1).max(500),
+  galleryUrls: z
+    .array(z.string().trim().min(1).max(500))
+    .max(12, 'Maximum 12 photos per product')
+    .optional()
+    .default([]),
   isFeatured: z.boolean().optional().default(false),
   isActive: z.boolean().optional().default(true),
 });
 
 const updateProductSchema = createProductSchema.partial();
+
+function toPortableUrl(url: string): string {
+  const trimmed = url.trim();
+  // Convert any legacy http://localhost:4000/uploads/... URL to portable /uploads/...
+  return trimmed.replace(/^https?:\/\/(localhost|127\.0\.0\.1):4000(\/uploads\/.*)$/i, '$2');
+}
+
+function normalizeGallery(imageUrl: string, galleryUrls?: string[]): string[] {
+  const unique = new Set<string>([toPortableUrl(imageUrl)]);
+  for (const url of galleryUrls ?? []) {
+    if (url.trim()) unique.add(toPortableUrl(url));
+  }
+  return Array.from(unique).slice(0, 12);
+}
+
+function serializeProduct<T extends { imageUrl: string; galleryUrls: string[] }>(
+  product: T
+): T {
+  return {
+    ...product,
+    imageUrl: toPortableUrl(product.imageUrl),
+    galleryUrls: (product.galleryUrls || []).map(toPortableUrl),
+  };
+}
 
 // ============================================================
 // GET /api/products — Public catalog with search & category filter
@@ -61,7 +90,7 @@ productRouter.get('/', async (req, res, next) => {
     const [products, categoriesRaw] = await Promise.all([
       prisma.product.findMany({
         where,
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'asc' }],
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
       }),
       prisma.product.findMany({
         where: { isActive: true },
@@ -75,7 +104,7 @@ productRouter.get('/', async (req, res, next) => {
       success: true,
       count: products.length,
       categories: categoriesRaw.map((c) => c.category),
-      products,
+      products: products.map(serializeProduct),
     });
   } catch (err) {
     next(err);
@@ -94,7 +123,11 @@ productRouter.get(
       const products = await prisma.product.findMany({
         orderBy: { createdAt: 'desc' },
       });
-      res.json({ success: true, count: products.length, products });
+      res.json({
+        success: true,
+        count: products.length,
+        products: products.map(serializeProduct),
+      });
     } catch (err) {
       next(err);
     }
@@ -118,7 +151,7 @@ productRouter.get('/:slugOrId', async (req, res, next) => {
       throw new AppError('Product not found.', 404);
     }
 
-    res.json({ success: true, product });
+    res.json({ success: true, product: serializeProduct(product) });
   } catch (err) {
     next(err);
   }
@@ -143,7 +176,14 @@ productRouter.post(
         throw new AppError('A product with this slug or SKU already exists.', 409);
       }
 
-      const product = await prisma.product.create({ data });
+      const galleryUrls = normalizeGallery(data.imageUrl, data.galleryUrls);
+      const product = await prisma.product.create({
+        data: {
+          ...data,
+          imageUrl: galleryUrls[0],
+          galleryUrls,
+        },
+      });
       res.status(201).json({
         success: true,
         message: 'Product created.',
@@ -169,15 +209,44 @@ productRouter.patch(
 
       const existing = await prisma.product.findUnique({
         where: { id },
-        select: { id: true },
+        select: { id: true, imageUrl: true, galleryUrls: true },
       });
       if (!existing) {
         throw new AppError('Product not found.', 404);
       }
 
+      // Check slug/SKU uniqueness against other products
+      if (data.slug || data.sku) {
+        const orChecks = [
+          ...(data.slug ? [{ slug: data.slug }] : []),
+          ...(data.sku ? [{ sku: data.sku }] : []),
+        ];
+        const collision = await prisma.product.findFirst({
+          where: { id: { not: id }, OR: orChecks },
+          select: { id: true },
+        });
+        if (collision) {
+          throw new AppError('Another product already uses this slug or SKU.', 409);
+        }
+      }
+
+      const nextImageUrl = data.imageUrl ?? existing.imageUrl;
+      const nextGalleryUrls =
+        data.galleryUrls !== undefined
+          ? normalizeGallery(nextImageUrl, data.galleryUrls)
+          : data.imageUrl !== undefined
+            ? normalizeGallery(nextImageUrl, existing.galleryUrls)
+            : undefined;
+
       const product = await prisma.product.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          ...(nextGalleryUrls !== undefined && {
+            imageUrl: nextGalleryUrls[0],
+            galleryUrls: nextGalleryUrls,
+          }),
+        },
       });
 
       res.json({
