@@ -197,21 +197,21 @@ const SEED_PRODUCTS = [
 async function main() {
   console.log('🌱 Seeding Decom Industries PostgreSQL database...');
 
-  // 1. Seed Primary Admin Account (Himanshu Sheta)
+  // 1. Seed Primary Demo Admin Account
   const adminPasswordHash = await bcrypt.hash('Admin@1234', 12);
   const himanshuAdmin = await prisma.user.upsert({
-    where: { email: 'himanshusheta2022@gmail.com' },
+    where: { email: 'demo.admin@example.com' },
     update: {
-      name: 'Himanshu Sheta',
-      phone: '+91 9429279768',
+      name: 'Demo Admin',
+      phone: '+91 90000 00000',
       businessName: 'Decom Industries',
       city: 'Surat, Gujarat',
       role: 'ADMIN',
     },
     create: {
-      name: 'Himanshu Sheta',
-      email: 'himanshusheta2022@gmail.com',
-      phone: '+91 9429279768',
+      name: 'Demo Admin',
+      email: 'demo.admin@example.com',
+      phone: '+91 90000 00000',
       businessName: 'Decom Industries',
       city: 'Surat, Gujarat',
       passwordHash: adminPasswordHash,
